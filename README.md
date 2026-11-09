@@ -56,6 +56,23 @@ Supabase Studio local: http://127.0.0.1:54323 · หยุด Supabase: `npm run
 | `npm run test:e2e` | รันเทสต์ Playwright (สตาร์ต `next dev` ให้เอง) ทั้งจอคอมและมือถือ |
 | `npm test` | รันทั้งสองชุด |
 
+### ข้อมูลทดสอบ (seed, เฉพาะ local)
+
+`npm run db:reset` สร้างข้อมูลจาก [supabase/seed.sql](supabase/seed.sql):
+
+| บัญชี | ล็อกอิน | รหัสผ่าน |
+| --- | --- | --- |
+| อาจารย์ | `instructor@example.com` | `instructor-local` (มี identity Google จำลองไว้แล้ว) |
+| นิสิต 5 คน | `6500000001` – `6500000005` (อีเมลภายใน `<รหัส>@quiz.local`) | เท่ากับรหัสนิสิต |
+
+โจทย์ 3 ข้อ: ข้อ 1 เปิดอยู่, ข้อ 2 ปิดแล้ว ประกาศผลแล้ว (token `local-demo-token-problem-2`), ข้อ 3 ยังไม่เปิด
+
+### เทสต์ฐานข้อมูล
+
+ไฟล์อยู่ใน `supabase/tests/database/` ใช้ตัวช่วยจาก `_helpers.psql` (`\ir _helpers.psql`)
+— ทุกไฟล์ห่อด้วย `begin … rollback` และล้าง seed ภายใน transaction ยกเว้น `070_concurrency` ที่ใช้ `dblink`
+ยิงพร้อมกันหลาย connection จริงแล้วล้างข้อมูลของตัวเองตอนจบ
+
 ### Migration
 
 ```bash

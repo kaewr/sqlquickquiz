@@ -5,14 +5,19 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 1)
-- ระยะที่เสร็จแล้ว: 0 (tag `phase-0`)
+- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 2)
+- ระยะที่เสร็จแล้ว: 0 (tag `phase-0`), 1 (tag `phase-1`)
 - งานค้าง / หมายเหตุ:
-  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว; คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
+  - **ต้องทำเองก่อนเปิดใช้จริง:** ปิด “Allow new users to sign up” ใน Supabase Dashboard ของ project จริง (local ปิดแล้วใน config.toml) — ระหว่างนี้ `is_instructor()` ยังกันการสวมสิทธิ์อาจารย์ได้
+  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว, migration ระยะ 1 push แล้ว (ไม่มี seed); คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
   - GitHub: `kaewr/sqlquickquiz` · Vercel: https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`)
   - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
   - Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (ดู AGENTS.md); `npm run typecheck` รัน `next typegen` ก่อน tsc
-  - Supabase CLI เป็น devDependency เรียกผ่าน `npx supabase`
+  - Supabase CLI เป็น devDependency เรียกผ่าน `npx supabase`; แก้ค่า auth ใน `config.toml` แล้วต้อง `db:stop` + `db:start` (db reset ไม่พอ)
+  - เทสต์ pgTAP: ใช้ `\ir _helpers.psql` (สร้างผู้ใช้/โจทย์, `tests.login_as`, `tests.reset_data()` ล้าง seed ใน transaction); `070_concurrency` ใช้ dblink และ commit จริงแล้วล้างเอง
+  - รหัสข้อผิดพลาดจากฐานข้อมูล: `NOT_STUDENT`, `INVALID_SQL_TEXT`, `PROBLEM_CLOSED`, `ALREADY_SUBMITTED` (submit_answer), `NOT_INSTRUCTOR`, `PROBLEM_NOT_FOUND` (release_results), `SCORE_OUT_OF_RANGE`, `MANUAL_RESULT_PROTECTED` (results) — errcode P0001 ยกเว้น NOT_INSTRUCTOR = 42501
+  - `submitted_at` ตั้งด้วย `clock_timestamp()` หลังได้ล็อก (เรียงตามเวลาตรงกับ submit_order เสมอ)
+  - ระยะที่ 5: verdict ยังเป็นค่าที่ผู้ให้คะแนนส่งมา — ต้องทำให้คำนวณจากคะแนนตามเกณฑ์ระยะ 5
   - ทดสอบบน Vercel ได้ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
   - `npm audit`: moderate 8 รายการใน `@typescript-eslint` (devDependency) ยังไม่แก้
   - ยังต้องตั้ง `NEXT_PUBLIC_SITE_URL=https://sqlquickquiz.vercel.app` บน Vercel และ Site URL ใน Supabase Auth ก่อนระยะที่ 2
@@ -74,7 +79,11 @@
 
 **อาจารย์**
 - ล็อกอิน Google เฉพาะอีเมลที่อยู่ในตาราง `instructors`
-- ฟังก์ชัน `is_instructor()` ใช้ใน RLS ทุกที่ที่ต้องตรวจสิทธิ์อาจารย์
+- ฟังก์ชัน `is_instructor()` ใช้ใน RLS ทุกที่ที่ต้องตรวจสิทธิ์อาจารย์ — ต้องตรงทั้งอีเมลใน `instructors` **และ** ผู้ใช้มี identity แบบ Google (กันการสมัครด้วยรหัสผ่านโดยใช้อีเมลอาจารย์)
+
+**การสมัครและลบบัญชี**
+- ปิดการสมัครเอง (`enable_signup = false` ทั้ง local และ project จริง) บัญชีนิสิตสร้างจาก CSV ผ่าน service key เท่านั้น
+- ลบนิสิตได้เฉพาะคนที่ยังไม่เคยส่งคำตอบ (FK `submissions → profiles` เป็น `on delete restrict`) ถ้าเคยส่งแล้วให้ปิดบัญชี (`is_active = false`) แทน
 
 ## โมเดลข้อมูล
 
@@ -84,14 +93,14 @@
 | profiles | ข้อมูลนิสิต ผูกกับบัญชี | user_id (auth.users), student_id (unique), first_name, last_name, section, password_changed, is_active |
 | problems | โจทย์ | id, title, description (markdown), schema_info (markdown), expected_example (markdown), max_score (ค่าเริ่มต้น 10), order_matters, dataset_name, created_at, results_released_at, public_token |
 | problem_solutions | เฉลย (แยกตาราง) | problem_id, reference_sql |
-| problem_status | สถานะที่นิสิตเห็นแบบ realtime | problem_id, is_open, submission_count, opened_at, closed_at |
+| problem_status | สถานะที่นิสิตเห็นแบบ realtime | problem_id, is_open, submission_count, opened_at (เวลาเปิดครั้งแรก ไม่เขียนทับ ใช้กำหนด “วันของโจทย์”), closed_at (เวลาปิดล่าสุด) |
 | submissions | คำตอบ | id, problem_id, student_user_id, sql_text, submitted_at (`default now()`), submit_order; **unique (problem_id, student_user_id)** |
 | results | ผลการตรวจ | submission_id (unique), score, verdict (correct / partial / incorrect), feedback, source (manual / auto), graded_by, graded_at |
 | grading_jobs | งานตรวจอัตโนมัติ (อนาคต สร้างตารางไว้ก่อน) | id, problem_id, status, total, done, error, created_at |
 
 **ฟังก์ชันในฐานข้อมูล**
 - `submit_answer(problem_id, sql_text)` — security definer: ตรวจว่าผู้เรียกเป็นนิสิตที่ is_active, ข้อเปิดอยู่, SQL ยาวไม่เกิน 10,000 ตัวอักษรและไม่ว่าง, ยังไม่เคยส่งข้อนี้ จากนั้นบันทึกและคืน submitted_at กับ submit_order; ข้อผิดพลาดคืนเป็นรหัสที่หน้าเว็บแปลเป็นข้อความไทย (`PROBLEM_CLOSED`, `ALREADY_SUBMITTED`, `NOT_STUDENT`, `INVALID_SQL_TEXT`)
-- trigger หลัง insert submissions — เพิ่ม `problem_status.submission_count` และกำหนด submit_order
+- trigger **ก่อน** insert submissions (BEFORE INSERT) — เพิ่ม `problem_status.submission_count` ด้วย `update … returning` แล้วใช้ค่าเป็น submit_order ในคำสั่งเดียว (ถ้า insert ล้ม ตัวนับย้อนกลับด้วย, การล็อกแถวทำให้ลำดับไม่ซ้ำเมื่อส่งพร้อมกัน)
 - `release_results(problem_id)` — อาจารย์เท่านั้น: ตั้ง results_released_at และสร้าง public_token (สุ่ม ≥ 16 ตัวอักษร เดาไม่ได้) พร้อมกันในครั้งเดียว
 - `get_public_results(token)` — security definer เรียกได้โดยไม่ล็อกอิน: คืนอันดับตามเวลาส่ง, รหัสนิสิตแบบปิดบางส่วน, คะแนน ของข้อที่ประกาศแล้วเท่านั้น ห้ามคืน SQL หรือชื่อ
 

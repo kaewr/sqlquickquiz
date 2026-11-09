@@ -1,0 +1,90 @@
+-- ตัวช่วยสำหรับเทสต์ pgTAP: ใช้ด้วย \ir _helpers.psql หลัง begin;
+-- ทุกอย่างอยู่ใน schema tests และถูก rollback ไปพร้อมกับเทสต์
+create extension if not exists pgtap with schema extensions;
+create extension if not exists dblink with schema extensions;
+create schema if not exists tests;
+
+-- สร้างผู้ใช้ใน auth.users + auth.identities (provider = 'email' หรือ 'google')
+create or replace function tests.create_user(p_email text, p_provider text default 'email')
+returns uuid language plpgsql as $$
+declare v_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+                          created_at, updated_at)
+  values (v_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          p_email, extensions.crypt('password', extensions.gen_salt('bf', 4)), now(),
+          jsonb_build_object('provider', p_provider, 'providers', jsonb_build_array(p_provider)),
+          '{}'::jsonb, now(), now());
+  insert into auth.identities (provider_id, user_id, identity_data, provider, created_at, updated_at)
+  values (case when p_provider = 'email' then v_id::text else 'google-' || v_id::text end,
+          v_id, jsonb_build_object('sub', v_id::text, 'email', p_email), p_provider, now(), now());
+  return v_id;
+end $$;
+
+-- นิสิต: บัญชี <student_id>@quiz.local + profile
+create or replace function tests.create_student(p_student_id text, p_section text default '1',
+                                                p_active boolean default true)
+returns uuid language plpgsql as $$
+declare v_id uuid;
+begin
+  v_id := tests.create_user(p_student_id || '@quiz.local', 'email');
+  insert into public.profiles (user_id, student_id, first_name, last_name, section, is_active)
+  values (v_id, p_student_id, 'ชื่อ' || p_student_id, 'นามสกุล', p_section, p_active);
+  return v_id;
+end $$;
+
+-- อาจารย์: ล็อกอิน Google + อยู่ในตาราง instructors
+create or replace function tests.create_instructor(p_email text)
+returns uuid language plpgsql as $$
+declare v_id uuid;
+begin
+  v_id := tests.create_user(p_email, 'google');
+  insert into public.instructors (email) values (lower(p_email)) on conflict do nothing;
+  return v_id;
+end $$;
+
+-- โจทย์ใหม่ (problem_status ถูกสร้างโดย trigger) เปิดไว้ถ้า p_open = true
+create or replace function tests.create_problem(p_title text, p_open boolean default true,
+                                                p_max_score numeric default 10)
+returns bigint language plpgsql as $$
+declare v_id bigint;
+begin
+  insert into public.problems (title, max_score) values (p_title, p_max_score) returning id into v_id;
+  insert into public.problem_solutions (problem_id, reference_sql) values (v_id, 'SELECT ''SOLUTION_' || v_id || '''');
+  if p_open then
+    update public.problem_status set is_open = true where problem_id = v_id;
+  end if;
+  return v_id;
+end $$;
+
+-- สลับเป็นผู้ใช้ที่ล็อกอิน (ต้องเรียกตอนเป็น postgres: ใช้ reset role ก่อนสลับคนใหม่)
+create or replace function tests.login_as(p_user_id uuid)
+returns void language plpgsql as $$
+declare v_email text;
+begin
+  select email into v_email from auth.users where id = p_user_id;
+  perform set_config('request.jwt.claims',
+    jsonb_build_object('sub', p_user_id::text, 'role', 'authenticated', 'email', v_email)::text, true);
+  perform set_config('role', 'authenticated', true);
+end $$;
+
+-- เป็นผู้ไม่ล็อกอิน
+create or replace function tests.login_anon()
+returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  perform set_config('role', 'anon', true);
+end $$;
+
+grant usage on schema tests to anon, authenticated;
+
+-- ล้างข้อมูลใน public (รวม seed) ภายใน transaction ของเทสต์ — ถูก rollback ตอนจบ
+-- ใช้เฉพาะเทสต์ที่ห่อด้วย begin/rollback เท่านั้น
+create or replace function tests.reset_data()
+returns void language plpgsql as $$
+begin
+  truncate public.results, public.submissions, public.grading_jobs, public.problem_solutions,
+           public.problem_status, public.problems, public.profiles, public.instructors
+  restart identity cascade;
+end $$;

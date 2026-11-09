@@ -27,13 +27,13 @@
 
 ## ระยะที่ 1 – ฐานข้อมูล
 
-- [ ] migration สร้างทุกตารางตามโมเดลข้อมูลใน CLAUDE.md รวม grading_jobs
-- [ ] unique (problem_id, student_user_id) และ submitted_at `default now()`
-- [ ] ฟังก์ชัน `submit_answer`, trigger ตัวนับและ submit_order, `release_results`, `get_public_results`, `is_instructor`
-- [ ] RLS ทุกตารางตามตารางสิทธิ์ใน CLAUDE.md
-- [ ] view สรุปรายวัน (Asia/Bangkok) และรายงานรายคน
-- [ ] seed ข้อมูลทดสอบ: อาจารย์ 1, นิสิต 5, โจทย์ 3
-- [ ] เทสต์ pgTAP ครอบคลุมอย่างน้อย: ส่งซ้ำถูกปฏิเสธ, ส่งตอนข้อปิดถูกปฏิเสธ, นิสิตอ่าน submissions/results ของคนอื่นไม่ได้, นิสิตอ่าน problem_solutions ไม่ได้, นิสิตอ่าน results ก่อนประกาศไม่ได้, ผู้ไม่ล็อกอินอ่านอะไรไม่ได้นอกจาก `get_public_results`, `get_public_results` ไม่คืน SQL, ตัวนับถูกต้องเมื่อส่งพร้อมกันหลายคน
+- [x] migration สร้างทุกตารางตามโมเดลข้อมูลใน CLAUDE.md รวม grading_jobs
+- [x] unique (problem_id, student_user_id) และ submitted_at `default now()`
+- [x] ฟังก์ชัน `submit_answer`, trigger ตัวนับและ submit_order, `release_results`, `get_public_results`, `is_instructor`
+- [x] RLS ทุกตารางตามตารางสิทธิ์ใน CLAUDE.md
+- [x] view สรุปรายวัน (Asia/Bangkok) และรายงานรายคน
+- [x] seed ข้อมูลทดสอบ: อาจารย์ 1, นิสิต 5, โจทย์ 3
+- [x] เทสต์ pgTAP ครอบคลุมอย่างน้อย: ส่งซ้ำถูกปฏิเสธ, ส่งตอนข้อปิดถูกปฏิเสธ, นิสิตอ่าน submissions/results ของคนอื่นไม่ได้, นิสิตอ่าน problem_solutions ไม่ได้, นิสิตอ่าน results ก่อนประกาศไม่ได้, ผู้ไม่ล็อกอินอ่านอะไรไม่ได้นอกจาก `get_public_results`, `get_public_results` ไม่คืน SQL, ตัวนับถูกต้องเมื่อส่งพร้อมกันหลายคน
 
 ```text
 อ่าน CLAUDE.md และ docs/PLAN.md ระยะที่ 1 ก่อน
@@ -52,7 +52,7 @@
 - [ ] หน้าเปลี่ยนรหัสผ่าน (รหัสเดิม + รหัสใหม่อย่างน้อย 8 ตัว) และปุ่มออกจากระบบ
 - [ ] อาจารย์ล็อกอิน Google, อีเมลที่ไม่อยู่ใน instructors ถูกปฏิเสธ
 - [ ] อาจารย์อัปโหลด CSV: แสดงตัวอย่าง, แจ้งแถวผิด (รหัสซ้ำ, ช่องว่าง), ยืนยันแล้วสร้างบัญชีผ่าน server route ที่ใช้ service key (รหัสเดิมที่มีอยู่แล้วให้อัปเดตชื่อ/ตอนเรียน ไม่สร้างซ้ำ)
-- [ ] อาจารย์รีเซ็ตรหัสผ่านกลับเป็นรหัสนิสิต และปิด/เปิดบัญชีได้
+- [ ] อาจารย์รีเซ็ตรหัสผ่านกลับเป็นรหัสนิสิต และปิด/เปิดบัญชีได้ ลบได้เฉพาะนิสิตที่ยังไม่เคยส่ง (เคยส่งแล้วให้ปิดบัญชีแทน)
 - [ ] server route ทุกเส้นตรวจว่าผู้เรียกเป็นอาจารย์ก่อนใช้ service key
 - [ ] เทสต์ Playwright: ล็อกอิน, เปลี่ยนรหัส, แถบเตือนหายหลังเปลี่ยน, นิสิตเข้า /admin ไม่ได้
 
