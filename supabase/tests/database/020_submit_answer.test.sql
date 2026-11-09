@@ -6,9 +6,9 @@ select tests.reset_data();
 select plan(21);
 
 create temp table ids as
-select tests.create_student('6500000101') as s1,
-       tests.create_student('6500000102') as s2,
-       tests.create_student('6500000103', '1', false) as s_inactive,
+select tests.create_student('65000101') as s1,
+       tests.create_student('65000102') as s2,
+       tests.create_student('65000103', '1', false) as s_inactive,
        tests.create_instructor('teacher@example.com') as t1,
        tests.create_problem('open-problem', true) as p_open,
        tests.create_problem('closed-problem', false) as p_closed;

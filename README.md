@@ -37,6 +37,9 @@ npx supabase status                 # ดู API URL และ key ของ loc
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_...`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret key (service_role key) — ใช้เฉพาะ server route |
 
+Google login บนเครื่อง: ใส่ `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` ใน `supabase/.env` (ไม่ถูก commit)
+แก้ค่า auth ใน `supabase/config.toml` หรือ `supabase/.env` แล้วต้อง `npm run db:stop && npm run db:start`
+
 ```bash
 npm run dev                         # http://localhost:3000
 ```
@@ -63,7 +66,8 @@ Supabase Studio local: http://127.0.0.1:54323 · หยุด Supabase: `npm run
 | บัญชี | ล็อกอิน | รหัสผ่าน |
 | --- | --- | --- |
 | อาจารย์ | `instructor@example.com` | `instructor-local` (มี identity Google จำลองไว้แล้ว) |
-| นิสิต 5 คน | `6500000001` – `6500000005` (อีเมลภายใน `<รหัส>@quiz.local`) | เท่ากับรหัสนิสิต |
+| นิสิต 5 คน | `65000001` – `65000005` (อีเมลภายใน `<รหัส>@quiz.local`) | เท่ากับรหัสนิสิต |
+| อาจารย์จริง | `pornthep.ro@up.ac.th` | ไม่มีรหัสผ่าน — ล็อกอิน Google ที่ `/admin` แล้วผูกบัญชีให้เอง |
 
 โจทย์ 3 ข้อ: ข้อ 1 เปิดอยู่, ข้อ 2 ปิดแล้ว ประกาศผลแล้ว (token `local-demo-token-problem-2`), ข้อ 3 ยังไม่เปิด
 
@@ -102,7 +106,7 @@ npx supabase link --project-ref anyvflatoeedytlrntmp # จะถามรหั�
    | --- | --- |
    | `NEXT_PUBLIC_SUPABASE_URL` | `https://anyvflatoeedytlrntmp.supabase.co` |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Dashboard > Project Settings > API Keys > publishable key |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Dashboard > Project Settings > API Keys > secret / service_role (**ติ๊ก Sensitive**) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Dashboard > Project Settings > API Keys > secret key (**ติ๊ก Sensitive**) — ใช้ในหน้าจัดการนิสิต |
    | `NEXT_PUBLIC_COUNT_MODE` | `realtime` |
    | `NEXT_PUBLIC_SITE_URL` | URL ของเว็บบน Vercel `https://sqlquickquiz.vercel.app` |
 
@@ -111,6 +115,16 @@ npx supabase link --project-ref anyvflatoeedytlrntmp # จะถามรหั�
 6. ที่ Supabase Dashboard > Authentication > URL Configuration ตั้ง Site URL เป็น URL ของ Vercel และเพิ่ม `https://<โดเมน>/**` ใน Redirect URLs (ใช้ตอนเปิด Google login ในระยะที่ 2)
 
 หมายเหตุ: ตัวแปร `NEXT_PUBLIC_*` ถูกฝังตอน build — แก้ค่าแล้วต้อง Redeploy
+
+### ค่าตั้งของ Supabase project จริง (ทำใน Dashboard)
+
+| ที่ | ค่า |
+| --- | --- |
+| Authentication > Sign In / Providers | ปิด *Allow new users to sign up*, เปิด Google (Client ID/Secret) |
+| Authentication > Sign In / Providers > Email | Minimum password length = **8** |
+| Authentication > Rate Limits | sign-ups and sign-ins ≥ **1000** / 5 นาที, token refreshes ≥ **1800** / 5 นาที (ทั้งห้องใช้ IP เดียวกัน) |
+| Authentication > URL Configuration | Site URL = `https://sqlquickquiz.vercel.app`, Redirect URLs = `https://sqlquickquiz.vercel.app/**`, `http://localhost:3000/**` |
+| Authentication > Users > Add user | สร้าง `pornthep.ro@up.ac.th` (Auto Confirm) ครั้งเดียว — Google จะผูกเข้ากับบัญชีนี้ตอนล็อกอินครั้งแรก |
 
 ## โครงสร้างโฟลเดอร์
 

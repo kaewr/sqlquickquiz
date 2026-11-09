@@ -6,8 +6,8 @@ select tests.reset_data();
 select plan(8);
 
 create temp table ids as
-select tests.create_student('6500000801', 'A') as s1,
-       tests.create_student('6500000802', 'B') as s2,
+select tests.create_student('65000801', 'A') as s1,
+       tests.create_student('65000802', 'B') as s2,
        tests.create_instructor('teacher@example.com') as t1,
        tests.create_problem('ค่ำวันที่ 9', true) as p_a,       -- 2026-11-08 17:30 UTC = 9 พ.ย. 00:30 BKK
        tests.create_problem('ปลายวันที่ 9', true) as p_b,      -- 2026-11-09 16:59 UTC = 9 พ.ย. 23:59 BKK
@@ -50,25 +50,25 @@ select results_eq(
 );
 select results_eq(
   $$ select submitted, score from public.v_student_problem_scores
-     where student_id = '6500000801' and problem_id = (select p_a from ids) $$,
+     where student_id = '65000801' and problem_id = (select p_a from ids) $$,
   $$ values (true, 8.00::numeric(6,2)) $$,
   'ส่งแล้วและให้คะแนนแล้ว แสดงคะแนน'
 );
 select results_eq(
   $$ select submitted, score from public.v_student_problem_scores
-     where student_id = '6500000801' and problem_id = (select p_b from ids) $$,
+     where student_id = '65000801' and problem_id = (select p_b from ids) $$,
   $$ values (false, null::numeric(6,2)) $$,
   'ไม่ได้ส่ง: submitted = false คะแนนว่าง'
 );
 select results_eq(
   $$ select submitted, score from public.v_student_problem_scores
-     where student_id = '6500000802' and problem_id = (select p_b from ids) $$,
+     where student_id = '65000802' and problem_id = (select p_b from ids) $$,
   $$ values (true, null::numeric(6,2)) $$,
   'ส่งแล้วแต่ยังไม่ให้คะแนน: submitted = true คะแนนว่าง'
 );
 select results_eq(
   $$ select section, day from public.v_student_problem_scores
-     where student_id = '6500000802' and problem_id = (select p_c from ids) $$,
+     where student_id = '65000802' and problem_id = (select p_c from ids) $$,
   $$ values ('B'::text, '2026-11-10'::date) $$,
   'รายงานรายคนมีตอนเรียนและวันของโจทย์ (กรองได้)'
 );
@@ -77,7 +77,7 @@ select results_eq(
 reset role;
 select tests.login_as(s2) from ids;
 select is_empty(
-  $$ select 1 from public.v_student_problem_scores where student_id <> '6500000802' $$,
+  $$ select 1 from public.v_student_problem_scores where student_id <> '65000802' $$,
   'นิสิตเห็นรายงานรายคนเฉพาะของตัวเอง'
 );
 select is_empty(

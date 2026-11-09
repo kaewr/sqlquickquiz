@@ -1,0 +1,27 @@
+/** แปลรหัสข้อผิดพลาด (จาก Supabase Auth และจากฐานข้อมูล) เป็นข้อความภาษาไทย */
+const MESSAGES: Record<string, string> = {
+  // ล็อกอิน / บัญชี
+  invalid_credentials: "รหัสนิสิตหรือรหัสผ่านไม่ถูกต้อง",
+  user_banned: "บัญชีนี้ถูกปิดใช้งาน กรุณาติดต่ออาจารย์",
+  over_request_rate_limit: "มีการเข้าสู่ระบบจำนวนมากเกินไป กรุณารอสักครู่แล้วลองใหม่",
+  over_email_send_rate_limit: "มีการเข้าสู่ระบบจำนวนมากเกินไป กรุณารอสักครู่แล้วลองใหม่",
+  weak_password: "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร",
+  same_password: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม",
+  signup_disabled: "บัญชีนี้ไม่มีสิทธิ์เข้าใช้ระบบ",
+  INVALID_STUDENT_ID: "รหัสนิสิตต้องเป็นตัวเลข 8 หลัก",
+  WRONG_OLD_PASSWORD: "รหัสผ่านเดิมไม่ถูกต้อง",
+  PASSWORD_MISMATCH: "รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน",
+  NOT_STUDENT_ACCOUNT: "บัญชีนี้ไม่ใช่บัญชีนิสิต",
+  NOT_INSTRUCTOR: "บัญชีนี้ไม่มีสิทธิ์เข้าหน้าอาจารย์",
+  UNAUTHENTICATED: "กรุณาเข้าสู่ระบบก่อน",
+  OAUTH_FAILED: "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่",
+  // จัดการนิสิต
+  STUDENT_NOT_FOUND: "ไม่พบนิสิตคนนี้",
+  STUDENT_HAS_SUBMISSIONS: "ลบไม่ได้ เพราะนิสิตคนนี้เคยส่งคำตอบแล้ว ให้ปิดบัญชีแทน",
+};
+
+export const GENERIC_ERROR = "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+
+export function thaiError(code: string | undefined | null): string {
+  return (code && MESSAGES[code]) || GENERIC_ERROR;
+}

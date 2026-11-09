@@ -6,8 +6,8 @@ select tests.reset_data();
 select plan(9);
 
 create temp table ids as
-select tests.create_student('6500000501') as s1,
-       tests.create_student('6500000502') as s2,
+select tests.create_student('65000501') as s1,
+       tests.create_student('65000502') as s2,
        tests.create_instructor('teacher@example.com') as t1,
        tests.create_problem('max5', true, 5) as p1;
 grant select on ids to authenticated;

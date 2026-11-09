@@ -6,9 +6,9 @@ select tests.reset_data();
 select plan(24);
 
 create temp table ids as
-select tests.create_student('6500000201', '1') as s1,
-       tests.create_student('6500000202', '2') as s2,
-       tests.create_student('6500000203', '1', false) as s_inactive,
+select tests.create_student('65000201', '1') as s1,
+       tests.create_student('65000202', '2') as s2,
+       tests.create_student('65000203', '1', false) as s_inactive,
        tests.create_instructor('teacher@example.com') as t1,
        tests.create_problem('p-released', true) as p_rel,
        tests.create_problem('p-graded-unreleased', true) as p_unrel,
@@ -103,7 +103,7 @@ select results_eq(
 
 -- profiles
 select results_eq(
-  $$ select student_id from public.profiles $$, $$ values ('6500000201') $$,
+  $$ select student_id from public.profiles $$, $$ values ('65000201') $$,
   'นิสิตอ่าน profiles ได้เฉพาะของตัวเอง'
 );
 select results_eq(

@@ -6,9 +6,9 @@ select tests.reset_data();
 select plan(22);
 
 create temp table ids as
-select tests.create_student('6512345678') as s1,
-       tests.create_student('6587654321') as s2,
-       tests.create_student('6500000303') as s3,
+select tests.create_student('65123678') as s1,
+       tests.create_student('65876321') as s2,
+       tests.create_student('65000303') as s3,
        tests.create_instructor('teacher@example.com') as t1,
        tests.create_problem('ข้อประกาศแล้ว', true, 10) as p_rel,
        tests.create_problem('ข้อยังไม่ประกาศ', true, 10) as p_unrel;
@@ -55,9 +55,9 @@ select throws_ok($$ select public.release_results(1) $$,       '42501', null, 'a
 select results_eq(
   $$ select submit_order, student_id_masked, score
      from public.get_public_results((select rel from tok)) order by submit_order $$,
-  $$ values (1, '65xxxxx678', 10.00::numeric(6,2)),
-            (2, '65xxxxx321', 5.00::numeric(6,2)),
-            (3, '65xxxxx303', null::numeric(6,2)) $$,
+  $$ values (1, '65xxx678', 10.00::numeric(6,2)),
+            (2, '65xxx321', 5.00::numeric(6,2)),
+            (3, '65xxx303', null::numeric(6,2)) $$,
   'anon ได้อันดับตามเวลาส่ง รหัสปิดบางส่วน และคะแนน (ยังไม่ให้คะแนน = ว่าง)'
 );
 select results_eq(
@@ -84,7 +84,7 @@ select is_empty(
 select is_empty(
   $$ select 1 from public.get_public_results((select rel from tok)) g
      where g::text like '%ชื่อ65%' or g::text like '%นามสกุล%'
-        or g::text like '%6512345678%' or g::text like '%6587654321%' $$,
+        or g::text like '%65123678%' or g::text like '%65876321%' $$,
   'get_public_results ไม่คืนชื่อและรหัสนิสิตเต็ม'
 );
 

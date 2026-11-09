@@ -11,8 +11,8 @@ select tests.create_instructor('Teacher@Example.com') as t1,
        tests.create_user('teacher2@example.com', 'email') as fake_t,
        -- ล็อกอิน Google แต่อีเมลไม่อยู่ใน instructors
        tests.create_user('stranger@gmail.com', 'google') as stranger,
-       tests.create_student('6500000401') as s1,
-       tests.create_student('6500000402') as s2;
+       tests.create_student('65000401') as s1,
+       tests.create_student('65000402') as s2;
 insert into public.instructors (email) values ('teacher2@example.com');
 grant select on ids to authenticated;
 
@@ -130,7 +130,7 @@ select results_eq(
   'อาจารย์อ่าน profiles ทั้งหมดได้'
 );
 select lives_ok(
-  $$ update public.profiles set is_active = false where student_id = '6500000402' $$,
+  $$ update public.profiles set is_active = false where student_id = '65000402' $$,
   'อาจารย์ปิดบัญชีนิสิตได้'
 );
 select throws_ok(

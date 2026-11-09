@@ -18,7 +18,7 @@ end $$;
 select tests.cleanup_concurrency();
 
 -- 20 นิสิต, 1 โจทย์เปิด
-select tests.create_student('65990000' || lpad(i::text, 2, '0')) from generate_series(1, 20) i;
+select tests.create_student('659900' || lpad(i::text, 2, '0')) from generate_series(1, 20) i;
 select tests.create_problem('__concurrency_test__', true);
 
 create temp table conc_plan as
@@ -26,7 +26,7 @@ create temp table conc_plan as
 select row_number() over () as n, p.user_id, pr.id as problem_id
 from (select user_id, student_id from public.profiles where student_id like '6599%'
       union all
-      select user_id, student_id from public.profiles where student_id like '6599%' and student_id <= '6599000005') p
+      select user_id, student_id from public.profiles where student_id like '6599%' and student_id <= '65990005') p
 cross join (select id from public.problems where title = '__concurrency_test__') pr;
 
 -- เปิด connection และตั้งให้เป็นนิสิตแต่ละคน

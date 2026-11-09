@@ -3,7 +3,7 @@
 --
 -- อาจารย์ 1: instructor@example.com / รหัสผ่าน instructor-local
 --            (มี identity Google จำลองให้ผ่าน is_instructor และมีรหัสผ่านไว้ทดสอบในเครื่อง)
--- นิสิต 5:   6500000001–6500000005 รหัสผ่านเริ่มต้น = รหัสนิสิต (ตอน 1: 3 คน, ตอน 2: 2 คน)
+-- นิสิต 5:   65000001–65000005 รหัสผ่านเริ่มต้น = รหัสนิสิต (ตอน 1: 3 คน, ตอน 2: 2 คน)
 -- โจทย์ 3:   ข้อ 1 เปิดอยู่ / ข้อ 2 ปิดแล้ว ให้คะแนนและประกาศผลแล้ว / ข้อ 3 ยังไม่เปิด
 
 do $$
@@ -30,14 +30,27 @@ begin
           'email', now(), now(), now());
   insert into public.instructors (email) values ('instructor@example.com');
 
+  -- อาจารย์จริง (อีเมลอยู่ใน instructors จาก migration แล้ว): สร้างบัญชีไว้ก่อน ไม่มีรหัสผ่าน
+  -- ล็อกอิน Google บนเครื่องครั้งแรกแล้ว Google จะผูกเข้ากับบัญชีนี้ตามอีเมล
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+                          raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                          confirmation_token, recovery_token, email_change_token_new, email_change)
+  values ('00000000-0000-4000-a000-000000000002', '00000000-0000-0000-0000-000000000000',
+          'authenticated', 'authenticated', 'pornthep.ro@up.ac.th', '', now(),
+          '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '');
+  insert into auth.identities (provider_id, user_id, identity_data, provider, created_at, updated_at)
+  values ('00000000-0000-4000-a000-000000000002', '00000000-0000-4000-a000-000000000002',
+          '{"sub":"00000000-0000-4000-a000-000000000002","email":"pornthep.ro@up.ac.th","email_verified":true}',
+          'email', now(), now());
+
   -- ---------- นิสิต ----------
   for r in
     select * from (values
-      ('6500000001', 'สมชาย',   'ใจดี',     '1'),
-      ('6500000002', 'สมหญิง',  'รักเรียน', '1'),
-      ('6500000003', 'ประเสริฐ', 'มั่นคง',   '1'),
-      ('6500000004', 'วิภาวดี',  'สุขใจ',    '2'),
-      ('6500000005', 'ธนากร',   'ศรีสุข',   '2')
+      ('65000001', 'สมชาย',   'ใจดี',     '1'),
+      ('65000002', 'สมหญิง',  'รักเรียน', '1'),
+      ('65000003', 'ประเสริฐ', 'มั่นคง',   '1'),
+      ('65000004', 'วิภาวดี',  'สุขใจ',    '2'),
+      ('65000005', 'ธนากร',   'ศรีสุข',   '2')
     ) as t(student_id, first_name, last_name, section)
   loop
     v_student := gen_random_uuid();
@@ -87,10 +100,10 @@ begin
   insert into public.submissions (problem_id, student_user_id, sql_text)
   select v_p2, p.user_id, sql
   from (values
-    ('6500000001', 'SELECT CountryCode, COUNT(*) AS cnt FROM city GROUP BY CountryCode ORDER BY cnt DESC;'),
-    ('6500000003', 'SELECT CountryCode, COUNT(*) FROM city GROUP BY CountryCode;'),
-    ('6500000004', 'SELECT COUNT(*) FROM city;'),
-    ('6500000002', 'SELECT CountryCode, COUNT(Name) cnt FROM city GROUP BY 1 ORDER BY 2 DESC;')
+    ('65000001', 'SELECT CountryCode, COUNT(*) AS cnt FROM city GROUP BY CountryCode ORDER BY cnt DESC;'),
+    ('65000003', 'SELECT CountryCode, COUNT(*) FROM city GROUP BY CountryCode;'),
+    ('65000004', 'SELECT COUNT(*) FROM city;'),
+    ('65000002', 'SELECT CountryCode, COUNT(Name) cnt FROM city GROUP BY 1 ORDER BY 2 DESC;')
   ) as t(student_id, sql)
   join public.profiles p on p.student_id = t.student_id;
   update public.problem_status set is_open = false where problem_id = v_p2;
@@ -100,10 +113,10 @@ begin
   from public.submissions s
   join public.profiles p on p.user_id = s.student_user_id
   join (values
-    ('6500000001', 10, 'correct',   null),
-    ('6500000002', 10, 'correct',   null),
-    ('6500000003', 5,  'partial',   'ยังไม่ได้เรียงลำดับ'),
-    ('6500000004', 0,  'incorrect', 'ต้องจัดกลุ่มตามประเทศ')
+    ('65000001', 10, 'correct',   null),
+    ('65000002', 10, 'correct',   null),
+    ('65000003', 5,  'partial',   'ยังไม่ได้เรียงลำดับ'),
+    ('65000004', 0,  'incorrect', 'ต้องจัดกลุ่มตามประเทศ')
   ) as x(student_id, score, verdict, feedback) on x.student_id = p.student_id
   where s.problem_id = v_p2;
 
