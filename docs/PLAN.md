@@ -9,12 +9,12 @@
 
 ## ระยะที่ 0 – ตั้งโครงโปรเจกต์
 
-- [ ] Next.js (App Router) + TypeScript + Tailwind รันได้ในเครื่อง
-- [ ] `supabase init` และ `supabase start` ทำงาน, เชื่อมกับ Supabase project จริงได้ (`supabase link`)
-- [ ] ไฟล์ `.env.example` ระบุตัวแปรที่ต้องใช้ทั้งหมด, `.env.local` อยู่ใน `.gitignore`
-- [ ] หน้าแรกแสดงผลบน Vercel ได้ (deploy จาก GitHub)
-- [ ] Playwright และ `supabase test db` รันได้อย่างละ 1 เทสต์ตัวอย่าง
-- [ ] README วิธีรันในเครื่องและ deploy
+- [x] Next.js (App Router) + TypeScript + Tailwind รันได้ในเครื่อง
+- [x] `supabase init` และ `supabase start` ทำงาน, เชื่อมกับ Supabase project จริงได้ (`supabase link`)
+- [x] ไฟล์ `.env.example` ระบุตัวแปรที่ต้องใช้ทั้งหมด, `.env.local` อยู่ใน `.gitignore`
+- [x] หน้าแรกแสดงผลบน Vercel ได้ (deploy จาก GitHub)
+- [x] Playwright และ `supabase test db` รันได้อย่างละ 1 เทสต์ตัวอย่าง
+- [x] README วิธีรันในเครื่องและ deploy
 
 ```text
 อ่าน CLAUDE.md และ docs/PLAN.md ระยะที่ 0 ก่อน

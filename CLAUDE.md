@@ -5,14 +5,17 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 0 (โค้ดเสร็จ, link แล้ว เหลือ deploy Vercel ที่ผู้ใช้ทำเอง)
-- ระยะที่เสร็จแล้ว: —
+- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 1)
+- ระยะที่เสร็จแล้ว: 0 (tag `phase-0`)
 - งานค้าง / หมายเหตุ:
-  - Supabase project จริง: `anyvflatoeedytlrntmp` (เชื่อมต่อด้วย publishable key ได้แล้ว, `supabase link` แล้ว — คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง)
+  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว; คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
+  - GitHub: `kaewr/sqlquickquiz` · Vercel: https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`)
   - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
   - Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (ดู AGENTS.md); `npm run typecheck` รัน `next typegen` ก่อน tsc
   - Supabase CLI เป็น devDependency เรียกผ่าน `npx supabase`
-  - ยังไม่ติด tag `phase-0` จนกว่า deploy Vercel สำเร็จ
+  - ทดสอบบน Vercel ได้ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
+  - `npm audit`: moderate 8 รายการใน `@typescript-eslint` (devDependency) ยังไม่แก้
+  - ยังต้องตั้ง `NEXT_PUBLIC_SITE_URL=https://sqlquickquiz.vercel.app` บน Vercel และ Site URL ใน Supabase Auth ก่อนระยะที่ 2
 
 (อัปเดตส่วนนี้ทุกครั้งที่จบระยะ)
 

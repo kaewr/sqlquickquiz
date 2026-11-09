@@ -87,7 +87,7 @@ npx supabase link --project-ref anyvflatoeedytlrntmp # จะถามรหั�
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Dashboard > Project Settings > API Keys > publishable key |
    | `SUPABASE_SERVICE_ROLE_KEY` | Dashboard > Project Settings > API Keys > secret / service_role (**ติ๊ก Sensitive**) |
    | `NEXT_PUBLIC_COUNT_MODE` | `realtime` |
-   | `NEXT_PUBLIC_SITE_URL` | URL ของเว็บบน Vercel เช่น `https://sqlquickquiz.vercel.app` |
+   | `NEXT_PUBLIC_SITE_URL` | URL ของเว็บบน Vercel `https://sqlquickquiz.vercel.app` |
 
 4. **Deploy** — หลังจากนี้ทุก push ที่ `main` จะ deploy production อัตโนมัติ และทุก branch/PR ได้ preview URL
 5. แนะนำ: Project Settings > Functions > Function Region เลือก **Singapore (sin1)** ให้ใกล้ฐานข้อมูล
