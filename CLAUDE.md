@@ -5,10 +5,10 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 0 (โค้ดเสร็จ เหลือ `supabase link` และ deploy Vercel ที่ผู้ใช้ทำเอง)
+- ระยะที่กำลังทำ: 0 (โค้ดเสร็จ, link แล้ว เหลือ deploy Vercel ที่ผู้ใช้ทำเอง)
 - ระยะที่เสร็จแล้ว: —
 - งานค้าง / หมายเหตุ:
-  - Supabase project จริง: `anyvflatoeedytlrntmp` (เชื่อมต่อด้วย publishable key ได้แล้ว) — ยังไม่ `supabase link`
+  - Supabase project จริง: `anyvflatoeedytlrntmp` (เชื่อมต่อด้วย publishable key ได้แล้ว, `supabase link` แล้ว — คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง)
   - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
   - Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (ดู AGENTS.md); `npm run typecheck` รัน `next typegen` ก่อน tsc
   - Supabase CLI เป็น devDependency เรียกผ่าน `npx supabase`
