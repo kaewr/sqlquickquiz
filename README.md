@@ -59,6 +59,11 @@ Supabase Studio local: http://127.0.0.1:54323 · หยุด Supabase: `npm run
 | `npm run test:e2e` | รันเทสต์ Playwright (สตาร์ต `next dev` ให้เอง) ทั้งจอคอมและมือถือ |
 | `npm test` | รันทั้งสองชุด |
 
+### รายชื่อนิสิต (CSV)
+
+แม่แบบ: [docs/students-template.csv](docs/students-template.csv) — คอลัมน์ `student_id` (ตัวเลข 8 หลัก), `first_name`, `last_name`, `section` ห้ามว่าง
+แก้ใน Excel แล้ว Save As เป็น **CSV UTF-8 (Comma delimited)** จากนั้นอัปโหลดที่หน้า `/admin/students`
+
 ### ข้อมูลทดสอบ (seed, เฉพาะ local)
 
 `npm run db:reset` สร้างข้อมูลจาก [supabase/seed.sql](supabase/seed.sql):
