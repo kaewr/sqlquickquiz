@@ -8,7 +8,7 @@
 - ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 2)
 - ระยะที่เสร็จแล้ว: 0 (tag `phase-0`), 1 (tag `phase-1`)
 - งานค้าง / หมายเหตุ:
-  - **ต้องทำเองก่อนเปิดใช้จริง:** ปิด “Allow new users to sign up” ใน Supabase Dashboard ของ project จริง (local ปิดแล้วใน config.toml) — ระหว่างนี้ `is_instructor()` ยังกันการสวมสิทธิ์อาจารย์ได้
+  - ปิดการสมัครเองแล้วทั้ง local (`config.toml`) และ project จริง (Dashboard, ตรวจแล้ว `disable_signup: true`)
   - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว, migration ระยะ 1 push แล้ว (ไม่มี seed); คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
   - GitHub: `kaewr/sqlquickquiz` · Vercel: https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`)
   - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
