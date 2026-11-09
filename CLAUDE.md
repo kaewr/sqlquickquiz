@@ -5,14 +5,17 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 2 — โค้ดและเทสต์เสร็จ (Playwright 27, pgTAP 153 ผ่าน) รอ: ทดลอง Google login จริง, ตั้งค่า project จริง (ดู README “ค่าตั้งของ Supabase project จริง”), push migration `accounts`, ใส่ `SUPABASE_SERVICE_ROLE_KEY` บน Vercel
+- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 3)
+- ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`)
+- งานค้าง / หมายเหตุ:
+  - ระยะ 2: Google login ทดสอบจริงบนเครื่องแล้ว (identity google ผูกกับบัญชีที่สร้างไว้ก่อน) — รอผู้ใช้ลองบน Vercel ครั้งแรก
+  - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
+  - ตรวจค่าตั้ง project จริงแบบอ่านอย่างเดียว: `npx supabase config diff`, `npx supabase db query --remote --read-only "<sql>"` — ห้ามใช้ `config push` (จะส่ง site_url localhost ขึ้นไป)
   - `.env.local` ชี้ Supabase บนเครื่องแล้ว (ค่า project จริงเป็นคอมเมนต์ในไฟล์); Playwright บังคับว่าต้องเป็น local
   - Next 16: `src/proxy.ts` ต่ออายุ session; หน้าที่อ่าน session อยู่ใน `<Suspense>`; `createClient()` ฝั่งเซิร์ฟเวอร์เรียก `await connection()` ก่อน (Cache Components)
   - ตรวจสิทธิ์รวมที่ `src/lib/auth.ts` (`getViewer`, `requireInstructor`); service key อยู่ที่ `src/lib/supabase/admin.ts` (`server-only`); ข้อความไทยที่ `src/lib/errors.ts`
-- ระยะที่เสร็จแล้ว: 0 (tag `phase-0`), 1 (tag `phase-1`)
-- งานค้าง / หมายเหตุ:
   - ปิดการสมัครเองแล้วทั้ง local (`config.toml`) และ project จริง (Dashboard, ตรวจแล้ว `disable_signup: true`)
-  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว, migration ระยะ 1 push แล้ว (ไม่มี seed); คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
+  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว (ไม่ push seed); คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
   - GitHub: `kaewr/sqlquickquiz` · Vercel: https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`)
   - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
   - Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (ดู AGENTS.md); `npm run typecheck` รัน `next typegen` ก่อน tsc
@@ -23,7 +26,7 @@
   - ระยะที่ 5: verdict ยังเป็นค่าที่ผู้ให้คะแนนส่งมา — ต้องทำให้คำนวณจากคะแนนตามเกณฑ์ระยะ 5
   - ทดสอบบน Vercel ได้ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
   - `npm audit`: moderate 8 รายการใน `@typescript-eslint` (devDependency) ยังไม่แก้
-  - ยังต้องตั้ง `NEXT_PUBLIC_SITE_URL=https://sqlquickquiz.vercel.app` บน Vercel และ Site URL ใน Supabase Auth ก่อนระยะที่ 2
+  - Vercel env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_COUNT_MODE`, `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (ผู้ใช้ตั้งเอง ผมตรวจจากฝั่งนี้ไม่ได้)
 
 (อัปเดตส่วนนี้ทุกครั้งที่จบระยะ)
 
