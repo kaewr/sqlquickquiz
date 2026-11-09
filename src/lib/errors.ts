@@ -18,6 +18,13 @@ const MESSAGES: Record<string, string> = {
   // จัดการนิสิต
   STUDENT_NOT_FOUND: "ไม่พบนิสิตคนนี้",
   STUDENT_HAS_SUBMISSIONS: "ลบไม่ได้ เพราะนิสิตคนนี้เคยส่งคำตอบแล้ว ให้ปิดบัญชีแทน",
+  INVALID_INPUT: "ข้อมูลที่ส่งไม่ถูกต้อง",
+  // ปัญหาการตั้งค่าเซิร์ฟเวอร์ (ดู log ใน Vercel)
+  SERVER_MISCONFIGURED: "ระบบยังตั้งค่าไม่ครบ: ไม่พบ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์",
+  SERVICE_KEY_REJECTED: "Supabase ปฏิเสธ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์ (ค่าไม่ถูกต้องหรือเป็นของ project อื่น)",
+  DB_ERROR: "บันทึกข้อมูลไม่สำเร็จ (ฐานข้อมูล)",
+  AUTH_ERROR: "ระบบบัญชีผู้ใช้ทำงานไม่สำเร็จ",
+  SERVER_ERROR: "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์",
 };
 
 export const GENERIC_ERROR = "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";

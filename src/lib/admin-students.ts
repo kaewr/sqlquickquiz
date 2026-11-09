@@ -7,11 +7,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function findStudent(userId: string) {
   if (!UUID.test(userId)) return null;
   const admin = createAdminClient();
-  const { data } = await admin
+  const { data, error } = await admin
     .from("profiles")
     .select("user_id, student_id")
     .eq("user_id", userId)
     .maybeSingle<{ user_id: string; student_id: string }>();
+  if (error) throw error; // เช่น service key ไม่ถูกต้อง — ให้ adminRouteError แจ้ง ไม่ใช่ตอบว่า "ไม่พบ"
   return data;
 }
 

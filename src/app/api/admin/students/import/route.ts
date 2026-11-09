@@ -3,6 +3,7 @@ import { requireInstructor } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateRows, type StudentRow } from "@/lib/csv";
 import { studentEmail } from "@/lib/student-id";
+import { adminRouteError, isKeyRejected } from "@/lib/admin-route";
 
 const MAX_ROWS = 2000;
 const CONCURRENCY = 5;
@@ -17,7 +18,14 @@ type Failed = { student_id: string; message: string };
 export async function POST(request: NextRequest) {
   const auth = await requireInstructor();
   if (!auth.ok) return auth.error;
+  try {
+    return await importStudents(request);
+  } catch (error) {
+    return adminRouteError("import", error);
+  }
+}
 
+async function importStudents(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const input = Array.isArray(body?.rows) ? (body.rows as StudentRow[]) : null;
   if (!input || input.length === 0 || input.length > MAX_ROWS) {
@@ -43,7 +51,10 @@ export async function POST(request: NextRequest) {
   for (let i = 0; i < valid.length; i += 500) {
     const ids = valid.slice(i, i + 500).map((r) => r.student_id);
     const { data, error } = await admin.from("profiles").select("user_id, student_id").in("student_id", ids);
-    if (error) return NextResponse.json({ error: "DB_ERROR" }, { status: 500 });
+    if (error) {
+      console.error("[admin:import] lookup profiles", error);
+      return NextResponse.json({ error: isKeyRejected(error) ? "SERVICE_KEY_REJECTED" : "DB_ERROR" }, { status: 500 });
+    }
     for (const p of data ?? []) existing.set(p.student_id, p.user_id);
   }
 
@@ -91,12 +102,14 @@ export async function POST(request: NextRequest) {
       if (userId) await admin.auth.admin.updateUserById(userId, { password: row.student_id, ban_duration: "none" });
     }
     if (!userId) {
+      if (error) console.error("[admin:import] createUser", row.student_id, error.code, error.message);
       failed.push({ student_id: row.student_id, message: "สร้างบัญชีไม่สำเร็จ" });
       return;
     }
 
     const { error: profileError } = await admin.from("profiles").insert({ user_id: userId, student_id: row.student_id, ...profileFields });
     if (profileError) {
+      console.error("[admin:import] insert profile", row.student_id, profileError);
       if (createdAuthUser) await admin.auth.admin.deleteUser(userId);
       failed.push({ student_id: row.student_id, message: "บันทึกข้อมูลนิสิตไม่สำเร็จ" });
       return;
