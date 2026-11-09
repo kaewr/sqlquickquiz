@@ -8,7 +8,8 @@
 - ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 3)
 - ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`)
 - งานค้าง / หมายเหตุ:
-  - ระยะ 2: Google login ทดสอบจริงบนเครื่องแล้ว (identity google ผูกกับบัญชีที่สร้างไว้ก่อน) — รอผู้ใช้ลองบน Vercel ครั้งแรก
+  - ระยะ 2 ใช้งานจริงแล้ว: Google login บน Vercel ผ่าน, นำเข้า CSV ตอน 1 จำนวน 110 คนบน project จริงแล้ว (2026-11-09)
+  - commit `ec3ae20` (ข้อความไทยเมื่อ service key ผิด/หาย) **ยังไม่ push** — ถามผู้ใช้ก่อน push
   - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
   - ตรวจค่าตั้ง project จริงแบบอ่านอย่างเดียว: `npx supabase config diff`, `npx supabase db query --remote --read-only "<sql>"` — ห้ามใช้ `config push` (จะส่ง site_url localhost ขึ้นไป)
   - `.env.local` ชี้ Supabase บนเครื่องแล้ว (ค่า project จริงเป็นคอมเมนต์ในไฟล์); Playwright บังคับว่าต้องเป็น local
