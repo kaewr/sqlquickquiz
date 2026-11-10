@@ -84,8 +84,8 @@ test("ครบวง: อาจารย์สร้างโจทย์ → �
   await expect(scard.getByTestId("receipt")).toBeVisible();
 
   const row = page.getByTestId(`sub-row-${student.studentId}`);
-  await expect(row).toContainText("SELECT count(*) FROM city;");
-  await expect(row).toContainText("ทดสอบ อัตโนมัติ");
+  await expect(page.getByTestId(`sql-row-${student.studentId}`)).toContainText("SELECT count(*) FROM city;");
+  await expect(row.getByTestId("student-id")).toHaveAttribute("title", "ทดสอบ อัตโนมัติ · ตอน 7");
   await expect(page.getByTestId(`pending-${student.studentId}`)).toHaveCount(0);
   await expect(page.getByTestId("detail-count").filter({ visible: true })).toHaveText("1");
 

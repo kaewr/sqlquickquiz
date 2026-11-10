@@ -62,7 +62,7 @@ test("ให้คะแนน → ก่อนประกาศนิสิต
   await g2.getByRole("button", { name: "บันทึก" }).click();
   await expect(g2.getByRole("alert")).toHaveText("คะแนนเกินคะแนนเต็มของข้อนี้");
   await g2.getByLabel(`คะแนน ${s2.studentId}`, { exact: true }).fill("4");
-  await g2.getByLabel(`ความเห็น ${s2.studentId}`).fill("ขาดคอลัมน์ Population");
+  await page.getByLabel(`ความเห็น ${s2.studentId}`).fill("ขาดคอลัมน์ Population");
   await g2.getByRole("button", { name: "บันทึก" }).click();
   await expect(g2.getByTestId("grade-verdict")).toHaveText("ได้บางส่วน 4/10");
   await expect(page.getByTestId("grading-progress")).toHaveText("ให้คะแนนแล้ว 2 / 3");
@@ -131,4 +131,72 @@ test("ปุ่มลัดครึ่ง = คะแนนเต็ม ÷ 2 �
   await page.getByRole("button", { name: "ประกาศผล" }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(page.getByTestId("released")).toBeVisible();
+});
+
+test("ปุ่มลัด 5 ระดับ (100/80/50/25/0%), แสดงทันทีและเปลี่ยนกลับเมื่อบันทึกไม่สำเร็จ, ชื่อ/ตอนเมื่อชี้ที่รหัส", async ({
+  page,
+  baseURL,
+  context,
+}) => {
+  const s = await newStudent();
+  const id = await createProblem();
+  problems.push(id);
+  await submitAs(s, id, "SELECT\n  Name,\n  Population\nFROM city;");
+
+  await context.addCookies(await sessionCookies(INSTRUCTOR.email, INSTRUCTOR.password, baseURL!));
+  await page.goto(`/admin/problems/${id}`);
+
+  // ตารางไม่มีคอลัมน์ชื่อ/ตอนแล้ว — อยู่ในข้อความเมื่อชี้ที่รหัส
+  await expect(page.getByRole("columnheader", { name: "ชื่อ - นามสกุล" })).toHaveCount(0);
+  await expect(page.getByTestId(`sub-row-${s.studentId}`).getByTestId("student-id")).toHaveAttribute("title", "ทดสอบ อัตโนมัติ · ตอน 9");
+  // SQL อยู่แถวล่าง คงการขึ้นบรรทัดเดิม
+  await expect(page.getByTestId(`sql-row-${s.studentId}`).locator("pre")).toHaveText("SELECT\n  Name,\n  Population\nFROM city;");
+
+  const g = page.getByTestId(`grade-${s.studentId}`);
+  for (const [label, text] of [
+    ["ดี", "ได้บางส่วน 8/10"],
+    ["ครึ่ง", "ได้บางส่วน 5/10"],
+    ["ปรับปรุง", "ได้บางส่วน 2.5/10"],
+    ["ศูนย์", "ผิด 0/10"],
+    ["เต็ม", "ถูก 10/10"],
+  ] as const) {
+    await g.getByRole("button", { name: label, exact: true }).click();
+    await expect(g.getByTestId("grade-verdict")).toHaveText(text);
+  }
+  await expect(g.getByText("กำลังบันทึก…")).toHaveCount(0);
+  const { adminClient } = await import("./support/supabase");
+  const { data: saved } = await adminClient().from("results").select("score, verdict").limit(1).eq(
+    "submission_id",
+    (await adminClient().from("submissions").select("id").eq("problem_id", id).single()).data!.id,
+  );
+  expect(saved).toEqual([{ score: 10, verdict: "correct" }]);
+
+  // บันทึกไม่สำเร็จ (เครือข่ายล่ม) → แสดงทันทีแล้วเปลี่ยนกลับเป็นค่าเดิม พร้อมข้อความ
+  await page.route("**/rest/v1/results**", (route) => route.abort());
+  await g.getByRole("button", { name: "ศูนย์", exact: true }).click();
+  await expect(g.getByRole("alert")).toBeVisible();
+  await expect(g.getByTestId("grade-verdict")).toHaveText("ถูก 10/10");
+  await page.unroute("**/rest/v1/results**");
+});
+
+test("แบ่งหน้าตารางผู้ส่ง: หน้าละ 20 เป็นค่าเริ่มต้น และเลือกแสดงทั้งหมดได้", async ({ page, baseURL, context }) => {
+  test.setTimeout(120_000);
+  const id = await createProblem();
+  problems.push(id);
+  for (let i = 0; i < 25; i++) await submitAs(await newStudent(), id);
+
+  await context.addCookies(await sessionCookies(INSTRUCTOR.email, INSTRUCTOR.password, baseURL!));
+  await page.goto(`/admin/problems/${id}`);
+  const rows = page.locator('tr[data-testid^="sub-row-"]');
+  await expect(rows).toHaveCount(20);
+  await expect(page.getByTestId("page-indicator").first()).toHaveText("หน้า 1 / 2");
+  await expect(page.getByTestId("grading-progress")).toHaveText("ให้คะแนนแล้ว 0 / 25"); // นับทุกคน
+
+  await page.getByRole("button", { name: "ถัดไป ›" }).first().click();
+  await expect(rows).toHaveCount(5);
+  await expect(page.getByTestId("page-indicator").first()).toHaveText("หน้า 2 / 2");
+
+  await page.getByLabel("จำนวนต่อหน้า").selectOption({ label: "ทั้งหมด" });
+  await expect(rows).toHaveCount(25);
+  await expect(page.getByTestId("page-indicator")).toHaveCount(0);
 });

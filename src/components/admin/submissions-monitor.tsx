@@ -4,16 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useBroadcast } from "@/lib/use-broadcast";
 import { OpenToggle } from "@/components/admin/open-toggle";
-import { GradeCell } from "@/components/admin/grade-cell";
+import { SubmissionRows } from "@/components/admin/submission-rows";
 import { ReleasePanel } from "@/components/admin/release-panel";
 import { fetchSubmissions, type AdminSubmission, type RosterStudent } from "@/lib/admin-submissions";
-
-const timeFormat = new Intl.DateTimeFormat("th-TH", {
-  timeZone: "Asia/Bangkok",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
 
 /**
  * รายการผู้ส่ง (realtime ผ่าน problem-submissions:<id>) + คนที่ยังไม่ส่ง
@@ -38,6 +31,8 @@ export function SubmissionsMonitor({
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [section, setSection] = useState("");
+  const [pageSize, setPageSize] = useState<number>(20); // 0 = ทั้งหมด
+  const [page, setPage] = useState(1);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const reload = useCallback(async () => {
@@ -92,6 +87,11 @@ export function SubmissionsMonitor({
   const onGraded = (id: number) => (result: NonNullable<AdminSubmission["result"]>) =>
     setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, result } : s)));
 
+  // แบ่งหน้า (หน้าละ 20 เป็นค่าเริ่มต้น, 0 = แสดงทั้งหมด)
+  const pageCount = pageSize ? Math.max(1, Math.ceil(shownSubs.length / pageSize)) : 1;
+  const currentPage = Math.min(page, pageCount);
+  const pageSubs = pageSize ? shownSubs.slice((currentPage - 1) * pageSize, currentPage * pageSize) : shownSubs;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="card flex flex-wrap items-center justify-between gap-3">
@@ -119,7 +119,15 @@ export function SubmissionsMonitor({
 
       <label className="field max-w-xs">
         <span>ตอนเรียน</span>
-        <select value={section} onChange={(e) => setSection(e.target.value)} className="input" aria-label="กรองตามตอนเรียน">
+        <select
+          value={section}
+          onChange={(e) => {
+            setSection(e.target.value);
+            setPage(1);
+          }}
+          className="input"
+          aria-label="กรองตามตอนเรียน"
+        >
           <option value="">ทุกตอนเรียน</option>
           {sections.map((s) => (
             <option key={s} value={s}>
@@ -130,45 +138,39 @@ export function SubmissionsMonitor({
       </label>
 
       <section aria-labelledby="subs-heading" className="flex flex-col gap-2">
-        <h2 id="subs-heading" className="font-semibold">
-          ผู้ส่ง ({shownSubs.length} คน)
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="subs-heading" className="font-semibold">
+            ผู้ส่ง ({shownSubs.length} คน)
+          </h2>
+          <Pager
+            page={currentPage}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
         <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[64rem] text-sm">
+          <table className="w-full min-w-[52rem] text-sm">
             <thead className="bg-muted text-left">
               <tr>
-                <th className="px-3 py-2 text-right">ลำดับ</th>
+                <th className="w-14 px-3 py-2 text-right">ลำดับ</th>
                 <th className="px-3 py-2">รหัสนิสิต</th>
-                <th className="px-3 py-2">ชื่อ - นามสกุล</th>
-                <th className="px-3 py-2">ตอน</th>
                 <th className="px-3 py-2">เวลา</th>
-                <th className="px-3 py-2">SQL</th>
                 <th className="px-3 py-2">คะแนน</th>
+                <th className="px-3 py-2">ความเห็น</th>
               </tr>
             </thead>
             <tbody>
-              {shownSubs.map((s) => (
-                <tr key={s.id} className="border-t border-border align-top" data-testid={`sub-row-${s.student_id}`}>
-                  <td className="px-3 py-2 text-right tabular-nums">{s.submit_order}</td>
-                  <td className="px-3 py-2 font-mono">{s.student_id}</td>
-                  <td className="px-3 py-2">
-                    {s.first_name} {s.last_name}
-                  </td>
-                  <td className="px-3 py-2">{s.section}</td>
-                  <td className="px-3 py-2 tabular-nums">{timeFormat.format(new Date(s.submitted_at))}</td>
-                  <td className="px-3 py-2">
-                    <pre className="max-h-48 max-w-xl overflow-auto whitespace-pre-wrap break-words rounded bg-muted p-2 font-mono text-xs">
-                      {s.sql_text}
-                    </pre>
-                  </td>
-                  <td className="px-3 py-2">
-                    <GradeCell submission={s} maxScore={maxScore} onGraded={onGraded(s.id)} />
-                  </td>
-                </tr>
+              {pageSubs.map((s) => (
+                <SubmissionRows key={s.id} submission={s} maxScore={maxScore} supabase={supabase} onGraded={onGraded(s.id)} />
               ))}
               {shownSubs.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-foreground/60">
+                  <td colSpan={5} className="px-3 py-6 text-center text-foreground/60">
                     ยังไม่มีผู้ส่ง
                   </td>
                 </tr>
@@ -176,6 +178,11 @@ export function SubmissionsMonitor({
             </tbody>
           </table>
         </div>
+        {pageCount > 1 && (
+          <div className="flex justify-end">
+            <Pager page={currentPage} pageCount={pageCount} pageSize={pageSize} onPage={setPage} />
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="pending-heading" className="flex flex-col gap-2">
@@ -196,5 +203,56 @@ export function SubmissionsMonitor({
         )}
       </section>
     </div>
+  );
+}
+
+const PAGE_SIZES = [20, 50, 100, 0];
+
+function Pager({
+  page,
+  pageCount,
+  pageSize,
+  onPage,
+  onPageSize,
+}: {
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  onPage: (p: number) => void;
+  onPageSize?: (n: number) => void;
+}) {
+  return (
+    <nav className="flex flex-wrap items-center gap-2 text-sm" aria-label="แบ่งหน้า">
+      {onPageSize && (
+        <label className="flex items-center gap-1">
+          <span className="text-foreground/60">แสดง</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSize(Number(e.target.value))}
+            className="input w-auto px-2 py-1 text-sm"
+            aria-label="จำนวนต่อหน้า"
+          >
+            {PAGE_SIZES.map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? "ทั้งหมด" : `${n} คน/หน้า`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {pageCount > 1 && (
+        <>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+            ‹ ก่อนหน้า
+          </button>
+          <span data-testid="page-indicator">
+            หน้า {page} / {pageCount}
+          </span>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pageCount} onClick={() => onPage(page + 1)}>
+            ถัดไป ›
+          </button>
+        </>
+      )}
+    </nav>
   );
 }
