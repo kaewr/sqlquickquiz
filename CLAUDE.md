@@ -5,10 +5,10 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 4 — โค้ดและเทสต์เสร็จ (Playwright 47 ข้อ ผ่าน 2 รอบติด, pgTAP 180) รอ: push migration `admin_problems` + deploy แล้วทดลองครบวงบน Vercel
-- ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`), 3 (`phase-3`)
+- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 5)
+- ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`), 3 (`phase-3`), 4 (`phase-4`)
 - งานค้าง / หมายเหตุ:
-  - ระยะ 3 ขึ้น project จริงแล้ว (migration `realtime_broadcast`) แต่ realtime บน project จริงยังไม่ได้ทดสอบกับนิสิตจริง — ทดสอบตอนระยะ 4 เมื่อมีหน้าเปิดโจทย์
+  - project จริง: migration ถึง `admin_problems` แล้ว — realtime บน project จริงรอผู้ใช้ทดลองครบวงครั้งแรก (สร้าง → เปิด → นิสิตส่ง → ปิด)
   - ระยะ 2 ใช้งานจริงแล้ว: Google login บน Vercel ผ่าน, นำเข้า CSV ตอน 1 จำนวน 110 คนบน project จริงแล้ว (2026-11-09)
   - commit `ec3ae20` (ข้อความไทยเมื่อ service key ผิด/หาย) **ยังไม่ push** — ถามผู้ใช้ก่อน push
   - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
