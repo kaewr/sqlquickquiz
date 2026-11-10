@@ -13,7 +13,14 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
 // ทดสอบเว็บที่ deploy แล้ว: รันเฉพาะเทสต์ที่ไม่แตะฐานข้อมูล
 const remote = !!process.env.PLAYWRIGHT_BASE_URL;
 const dbSpecs = remote
-  ? ["**/student.spec.ts", "**/admin.spec.ts", "**/admin-problems.spec.ts", "**/current-problems.spec.ts"]
+  ? [
+      "**/student.spec.ts",
+      "**/admin.spec.ts",
+      "**/admin-problems.spec.ts",
+      "**/current-problems.spec.ts",
+      "**/grading.spec.ts",
+      "**/student-history.spec.ts",
+    ]
   : [];
 const POLLING_SPEC = "**/counter-polling.spec.ts";
 
@@ -38,7 +45,7 @@ export default defineConfig({
     {
       name: "mobile",
       use: { ...devices["Pixel 7"] },
-      testIgnore: [...dbSpecs, POLLING_SPEC, "**/admin.spec.ts", "**/admin-problems.spec.ts"],
+      testIgnore: [...dbSpecs, POLLING_SPEC, "**/admin.spec.ts", "**/admin-problems.spec.ts", "**/grading.spec.ts"],
     },
     // NEXT_PUBLIC_COUNT_MODE=polling (dev server ตัวที่สอง)
     ...(remote

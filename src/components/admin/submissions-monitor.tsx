@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useBroadcast } from "@/lib/use-broadcast";
 import { OpenToggle } from "@/components/admin/open-toggle";
+import { GradeCell } from "@/components/admin/grade-cell";
+import { ReleasePanel } from "@/components/admin/release-panel";
 import { fetchSubmissions, type AdminSubmission, type RosterStudent } from "@/lib/admin-submissions";
 
 const timeFormat = new Intl.DateTimeFormat("th-TH", {
@@ -19,14 +21,18 @@ const timeFormat = new Intl.DateTimeFormat("th-TH", {
  */
 export function SubmissionsMonitor({
   problemId,
+  maxScore,
   initialOpen,
   initialSubmissions,
   roster,
+  release,
 }: {
   problemId: number;
+  maxScore: number;
   initialOpen: boolean;
   initialSubmissions: AdminSubmission[];
   roster: RosterStudent[];
+  release: { url: string; releasedAt: string } | null;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [submissions, setSubmissions] = useState(initialSubmissions);
@@ -82,6 +88,9 @@ export function SubmissionsMonitor({
   const shownSubs = submissions.filter((s) => !section || s.section === section);
   const pending = roster.filter((s) => !submittedIds.has(s.user_id) && (!section || s.section === section));
   const rosterInSection = roster.filter((s) => !section || s.section === section).length;
+  const graded = submissions.filter((s) => s.result).length;
+  const onGraded = (id: number) => (result: NonNullable<AdminSubmission["result"]>) =>
+    setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, result } : s)));
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,6 +115,8 @@ export function SubmissionsMonitor({
         <OpenToggle problemId={problemId} isOpen={isOpen} size="md" onChanged={setIsOpen} />
       </div>
 
+      <ReleasePanel problemId={problemId} graded={graded} total={submissions.length} initial={release} />
+
       <label className="field max-w-xs">
         <span>ตอนเรียน</span>
         <select value={section} onChange={(e) => setSection(e.target.value)} className="input" aria-label="กรองตามตอนเรียน">
@@ -123,7 +134,7 @@ export function SubmissionsMonitor({
           ผู้ส่ง ({shownSubs.length} คน)
         </h2>
         <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[48rem] text-sm">
+          <table className="w-full min-w-[64rem] text-sm">
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-3 py-2 text-right">ลำดับ</th>
@@ -132,6 +143,7 @@ export function SubmissionsMonitor({
                 <th className="px-3 py-2">ตอน</th>
                 <th className="px-3 py-2">เวลา</th>
                 <th className="px-3 py-2">SQL</th>
+                <th className="px-3 py-2">คะแนน</th>
               </tr>
             </thead>
             <tbody>
@@ -149,11 +161,14 @@ export function SubmissionsMonitor({
                       {s.sql_text}
                     </pre>
                   </td>
+                  <td className="px-3 py-2">
+                    <GradeCell submission={s} maxScore={maxScore} onGraded={onGraded(s.id)} />
+                  </td>
                 </tr>
               ))}
               {shownSubs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-foreground/60">
+                  <td colSpan={7} className="px-3 py-6 text-center text-foreground/60">
                     ยังไม่มีผู้ส่ง
                   </td>
                 </tr>

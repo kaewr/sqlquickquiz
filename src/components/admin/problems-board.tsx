@@ -13,6 +13,7 @@ export type BoardProblem = {
   is_open: boolean;
   submission_count: number;
   opened_at: string | null;
+  released?: boolean;
 };
 
 const timeFormat = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
@@ -105,6 +106,11 @@ function ProblemTable({ rows, showOpened, onChanged }: { rows: BoardProblem[]; s
               )}
               <td className="px-3 py-2" data-testid="board-status">
                 {p.is_open ? <span className="text-green-700 dark:text-green-400">เปิดรับ</span> : "ปิด"}
+                {p.released && (
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs" data-testid="board-released">
+                    ประกาศผลแล้ว
+                  </span>
+                )}
               </td>
               <td className="px-3 py-2 text-right tabular-nums" data-testid="board-count">
                 {p.submission_count}

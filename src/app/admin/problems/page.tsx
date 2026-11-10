@@ -27,7 +27,7 @@ async function Daily({ searchParams }: { searchParams: PageProps<"/admin/problem
   const [{ data: daily }, { data: drafts }] = await Promise.all([
     supabase
       .from("v_daily_problem_summary")
-      .select("problem_id, title, is_open, submission_count, opened_at")
+      .select("problem_id, title, is_open, submission_count, opened_at, results_released")
       .eq("day", day)
       .order("opened_at"),
     supabase
@@ -44,6 +44,7 @@ async function Daily({ searchParams }: { searchParams: PageProps<"/admin/problem
     is_open: p.is_open,
     submission_count: p.submission_count,
     opened_at: p.opened_at,
+    released: p.results_released,
   }));
   const draftProblems: BoardProblem[] = (drafts ?? []).map((p) => ({
     id: p.id,

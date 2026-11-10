@@ -8,6 +8,7 @@ import { DeleteProblem } from "@/components/admin/delete-problem";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminProblem, parseId } from "@/lib/admin-problems";
 import { fetchActiveRoster, fetchSubmissions } from "@/lib/admin-submissions";
+import { rankingUrl } from "@/lib/site-url";
 
 export default function ProblemDetailPage({ params }: PageProps<"/admin/problems/[id]">) {
   return (
@@ -27,7 +28,15 @@ async function Detail({ params }: { params: PageProps<"/admin/problems/[id]">["p
   if (!problem) notFound();
 
   const supabase = await createClient();
-  const [submissions, roster] = await Promise.all([fetchSubmissions(supabase, problem.id), fetchActiveRoster(supabase)]);
+  const [submissions, roster, token] = await Promise.all([
+    fetchSubmissions(supabase, problem.id),
+    fetchActiveRoster(supabase),
+    supabase.from("problems").select("public_token").eq("id", problem.id).single(),
+  ]);
+  const release =
+    problem.results_released_at && token.data?.public_token
+      ? { url: await rankingUrl(token.data.public_token), releasedAt: problem.results_released_at }
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,6 +93,8 @@ async function Detail({ params }: { params: PageProps<"/admin/problems/[id]">["p
 
       <SubmissionsMonitor
         problemId={problem.id}
+        maxScore={problem.max_score}
+        release={release}
         initialOpen={problem.is_open}
         initialSubmissions={submissions}
         roster={roster}

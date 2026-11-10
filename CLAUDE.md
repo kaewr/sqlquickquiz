@@ -5,7 +5,7 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 5)
+- ระยะที่กำลังทำ: 5 — โค้ดและเทสต์เสร็จ (Playwright 53 ข้อ ผ่าน 2 รอบติด, pgTAP 212) รอ: push migration `grading` + deploy
 - ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`), 3 (`phase-3`), 4 (`phase-4`)
 - งานค้าง / หมายเหตุ:
   - project จริง: migration ถึง `delete_problem` แล้ว — realtime บน project จริงรอผู้ใช้ทดลองครบวงครั้งแรก (สร้าง → เปิด → นิสิตส่ง → ปิด)
@@ -29,7 +29,7 @@
   - เทสต์ pgTAP: ใช้ `\ir _helpers.psql` (สร้างผู้ใช้/โจทย์, `tests.login_as`, `tests.reset_data()` ล้าง seed ใน transaction); `070_concurrency` ใช้ dblink และ commit จริงแล้วล้างเอง
   - รหัสข้อผิดพลาดจากฐานข้อมูล: `NOT_STUDENT`, `INVALID_SQL_TEXT`, `PROBLEM_CLOSED`, `ALREADY_SUBMITTED` (submit_answer), `NOT_INSTRUCTOR`, `PROBLEM_NOT_FOUND` (release_results), `SCORE_OUT_OF_RANGE`, `MANUAL_RESULT_PROTECTED` (results) — errcode P0001 ยกเว้น NOT_INSTRUCTOR = 42501
   - `submitted_at` ตั้งด้วย `clock_timestamp()` หลังได้ล็อก (เรียงตามเวลาตรงกับ submit_order เสมอ)
-  - ระยะที่ 5: verdict ยังเป็นค่าที่ผู้ให้คะแนนส่งมา — ต้องทำให้คำนวณจากคะแนนตามเกณฑ์ระยะ 5
+  - ระยะ 5: verdict คำนวณใน `tg_results_validate` (migration `grading`); ให้คะแนนผ่าน server action `src/app/actions/grading.ts` (upsert on submission_id, ปุ่มลัดไม่แตะ feedback); ประวัตินิสิต `src/lib/history.ts` + `student-history.tsx`; ลิงก์อันดับสร้างที่ `src/lib/site-url.ts`
   - ทดสอบบน Vercel ได้ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
   - `npm audit`: moderate 8 รายการใน `@typescript-eslint` (devDependency) ยังไม่แก้
   - Vercel env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_COUNT_MODE`, `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (ผู้ใช้ตั้งเอง ผมตรวจจากฝั่งนี้ไม่ได้)
@@ -165,7 +165,8 @@
 | ประกาศผล | ปุ่มเดียวต่อข้อ: แจ้งผลในประวัตินิสิต + เปิดลิงก์อันดับพร้อมกัน |
 | หน้าอันดับ | เรียงตามเวลาส่ง, รหัสนิสิตแบบปิดบางส่วน (เช่น `65xxxx678`), คะแนน, ไม่แสดง SQL และชื่อ |
 | สถานะในประวัตินิสิต | ก่อนประกาศ = “รอตรวจ”, หลังประกาศ = ถูก / ได้บางส่วน / ผิด + คะแนน |
-| ให้คะแนน | ด้วยมือในรุ่นนี้ (ปุ่มลัด เต็ม / ครึ่ง / ศูนย์ + กรอกเอง + ความเห็น) |
+| ให้คะแนน | ด้วยมือในรุ่นนี้ (ปุ่มลัด เต็ม / ครึ่ง / ศูนย์ บันทึกทันที + กรอกเอง + ความเห็น ≤ 2,000 ตัว กดบันทึก) · **verdict คำนวณที่ฐานข้อมูล** จากคะแนน (= เต็ม → correct, 0 → incorrect, นอกนั้น partial) รวมถึงเมื่อแก้คะแนนเต็มของโจทย์ |
+| หลังประกาศผล | แก้คะแนนได้ นิสิตเห็นค่าล่าสุด · คนที่ยังไม่ได้ให้คะแนนเห็น “รอตรวจ” จนกว่าจะให้ · ไม่มีการยกเลิกประกาศ · ลิงก์ `/r/[token]` แสดงตั้งแต่ระยะ 5 แต่หน้าเปิดได้ในระยะ 6 |
 | CSV รายชื่อ | `student_id, first_name, last_name, section` UTF-8 (รองรับ BOM จาก Excel) |
 
 ## การเตรียมรับตัวตรวจอัตโนมัติ

@@ -26,6 +26,7 @@ const MESSAGES: Record<string, string> = {
   ALREADY_SUBMITTED: "คุณส่งคำตอบข้อนี้ไปแล้ว ส่งซ้ำไม่ได้",
   // โจทย์
   PROBLEM_NOT_FOUND: "ไม่พบโจทย์ข้อนี้",
+  SCORE_OUT_OF_RANGE: "คะแนนเกินคะแนนเต็มของข้อนี้",
   CONFIRM_TITLE_MISMATCH: "ชื่อโจทย์ที่พิมพ์ยืนยันไม่ตรง",
   MAX_SCORE_BELOW_GIVEN: "คะแนนเต็มต่ำกว่าคะแนนที่ให้นิสิตไปแล้ว ให้แก้คะแนนนิสิตก่อน",
   // ปัญหาการตั้งค่าเซิร์ฟเวอร์ (ดู log ใน Vercel)

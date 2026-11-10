@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { StudentHistory } from "@/components/student/student-history";
 
-/** แท็บหน้านิสิต — "ประวัติของฉัน" จะมีเนื้อหาในระยะที่ 5 */
+/** แท็บหน้านิสิต: โจทย์ปัจจุบัน / ประวัติของฉัน */
 export function StudentTabs({ current }: { current: React.ReactNode }) {
   const [active, setActive] = useState<"current" | "history">("current");
   const tabs = [
@@ -34,7 +35,7 @@ export function StudentTabs({ current }: { current: React.ReactNode }) {
         {current}
       </div>
       <div role="tabpanel" id="panel-history" aria-labelledby="tab-history" hidden={active !== "history"} className="mt-4">
-        <p className="card text-center text-foreground/60">ยังไม่มีประวัติการส่งคำตอบ</p>
+        <StudentHistory active={active === "history"} />
       </div>
     </div>
   );
