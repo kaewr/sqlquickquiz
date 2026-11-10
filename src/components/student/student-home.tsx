@@ -1,8 +1,14 @@
 import type { StudentProfile } from "@/lib/auth";
 import { StudentTabs } from "@/components/student/student-tabs";
 import { UserMenu } from "@/components/student/user-menu";
+import { CurrentProblems } from "@/components/student/current-problems";
+import { createClient } from "@/lib/supabase/server";
+import { fetchCurrentProblems } from "@/lib/current-problems";
 
-export function StudentHome({ profile }: { profile: StudentProfile }) {
+export async function StudentHome({ profile }: { profile: StudentProfile }) {
+  const supabase = await createClient();
+  const initial = await fetchCurrentProblems(supabase);
+
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-border bg-background">
@@ -26,7 +32,7 @@ export function StudentHome({ profile }: { profile: StudentProfile }) {
       )}
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-4">
-        <StudentTabs />
+        <StudentTabs current={<CurrentProblems initial={initial} />} />
       </main>
     </div>
   );

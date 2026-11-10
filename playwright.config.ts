@@ -8,14 +8,15 @@ try {
 }
 
 const PORT = Number(process.env.PORT ?? 3000);
+const POLLING_PORT = PORT + 1;
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`;
 // ทดสอบเว็บที่ deploy แล้ว: รันเฉพาะเทสต์ที่ไม่แตะฐานข้อมูล
 const remote = !!process.env.PLAYWRIGHT_BASE_URL;
-const dbSpecs = remote ? ["**/student.spec.ts", "**/admin.spec.ts"] : [];
+const dbSpecs = remote ? ["**/student.spec.ts", "**/admin.spec.ts", "**/current-problems.spec.ts"] : [];
+const POLLING_SPEC = "**/counter-polling.spec.ts";
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: dbSpecs,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -30,16 +31,39 @@ export default defineConfig({
     timezoneId: "Asia/Bangkok",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: [...dbSpecs, POLLING_SPEC] },
     // หน้านิสิตต้องใช้งานบนมือถือได้ดี (หน้าอาจารย์ทดสอบบนจอคอมอย่างเดียว)
-    { name: "mobile", use: { ...devices["Pixel 7"] }, testIgnore: [...dbSpecs, "**/admin.spec.ts"] },
+    {
+      name: "mobile",
+      use: { ...devices["Pixel 7"] },
+      testIgnore: [...dbSpecs, POLLING_SPEC, "**/admin.spec.ts"],
+    },
+    // NEXT_PUBLIC_COUNT_MODE=polling (dev server ตัวที่สอง)
+    ...(remote
+      ? []
+      : [
+          {
+            name: "polling",
+            testMatch: POLLING_SPEC,
+            use: { ...devices["Desktop Chrome"], baseURL: `http://localhost:${POLLING_PORT}` },
+          },
+        ]),
   ],
   webServer: remote
     ? undefined
-    : {
-        command: "npm run dev",
-        url: baseURL,
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+    : [
+        {
+          command: "npm run dev",
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+        {
+          command: `npx next dev -p ${POLLING_PORT}`,
+          url: `http://localhost:${POLLING_PORT}`,
+          env: { NEXT_PUBLIC_COUNT_MODE: "polling", NEXT_DIST_DIR: ".next-polling" },
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      ],
 });

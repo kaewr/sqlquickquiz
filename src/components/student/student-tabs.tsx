@@ -2,20 +2,18 @@
 
 import { useState } from "react";
 
-const TABS = [
-  { id: "current", label: "โจทย์ปัจจุบัน", empty: "ยังไม่มีโจทย์ที่เปิดอยู่" },
-  { id: "history", label: "ประวัติของฉัน", empty: "ยังไม่มีประวัติการส่งคำตอบ" },
-] as const;
-
-/** แท็บหน้านิสิต — เนื้อหาจะเพิ่มในระยะที่ 3 (โจทย์ปัจจุบัน) และ 5 (ประวัติ) */
-export function StudentTabs() {
-  const [active, setActive] = useState<(typeof TABS)[number]["id"]>("current");
-  const tab = TABS.find((t) => t.id === active)!;
+/** แท็บหน้านิสิต — "ประวัติของฉัน" จะมีเนื้อหาในระยะที่ 5 */
+export function StudentTabs({ current }: { current: React.ReactNode }) {
+  const [active, setActive] = useState<"current" | "history">("current");
+  const tabs = [
+    { id: "current" as const, label: "โจทย์ปัจจุบัน" },
+    { id: "history" as const, label: "ประวัติของฉัน" },
+  ];
 
   return (
     <div>
       <div role="tablist" className="grid grid-cols-2 rounded-lg bg-muted p-1">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             role="tab"
@@ -31,8 +29,12 @@ export function StudentTabs() {
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} className="mt-4">
-        <p className="card text-center text-foreground/60">{tab.empty}</p>
+      {/* ซ่อนด้วย hidden แทนการถอดออก — realtime ของแท็บโจทย์ทำงานต่อ และ SQL ที่พิมพ์ค้างไม่หาย */}
+      <div role="tabpanel" id="panel-current" aria-labelledby="tab-current" hidden={active !== "current"} className="mt-4">
+        {current}
+      </div>
+      <div role="tabpanel" id="panel-history" aria-labelledby="tab-history" hidden={active !== "history"} className="mt-4">
+        <p className="card text-center text-foreground/60">ยังไม่มีประวัติการส่งคำตอบ</p>
       </div>
     </div>
   );

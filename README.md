@@ -56,7 +56,7 @@ Supabase Studio local: http://127.0.0.1:54323 · หยุด Supabase: `npm run
 | `npm run db:start` / `db:stop` / `db:status` | เปิด / ปิด / ดูสถานะ Supabase local |
 | `npm run db:reset` | ล้างฐานข้อมูล local แล้วรัน migration + seed ใหม่ |
 | `npm run test:db` | รันเทสต์ pgTAP (`supabase test db`) — ต้อง `db:start` ก่อน |
-| `npm run test:e2e` | รันเทสต์ Playwright (สตาร์ต `next dev` ให้เอง) ทั้งจอคอมและมือถือ |
+| `npm run test:e2e` | รันเทสต์ Playwright (สตาร์ต `next dev` ให้เอง 2 ตัว: port 3000 โหมด realtime และ 3001 โหมด polling) ทั้งจอคอมและมือถือ |
 | `npm test` | รันทั้งสองชุด |
 
 ### รายชื่อนิสิต (CSV)

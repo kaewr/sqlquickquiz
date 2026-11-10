@@ -89,3 +89,50 @@ export async function tryStudentLogin(studentId: string, password: string): Prom
   const { error } = await anonClient().auth.signInWithPassword({ email: `${studentId}@quiz.local`, password });
   return error ? (error.code ?? error.message) : null;
 }
+
+// ---------- โจทย์ (เปิด/ปิดด้วย service key — หน้าอาจารย์สำหรับเปิด/ปิดอยู่ในระยะ 4) ----------
+
+export async function createProblem(
+  opts: { title?: string; open?: boolean; description?: string; schemaInfo?: string; expected?: string } = {},
+): Promise<number> {
+  const admin = adminClient();
+  const { data, error } = await admin
+    .from("problems")
+    .insert({
+      title: opts.title ?? `โจทย์ทดสอบ ${Math.random().toString(36).slice(2, 8)}`,
+      description: opts.description ?? "แสดง **ชื่อเมือง** ทั้งหมด",
+      schema_info: opts.schemaInfo ?? "```\ncity(ID, Name)\n```",
+      expected_example: opts.expected ?? "| Name |\n| --- |\n| Bangkok |",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`create problem failed: ${error.message}`);
+  await admin.from("problem_solutions").insert({ problem_id: data.id, reference_sql: "SELECT SECRET_SOLUTION;" });
+  if (opts.open ?? true) await setProblemOpen(data.id, true);
+  return data.id;
+}
+
+export async function setProblemOpen(problemId: number, open: boolean) {
+  const { error } = await adminClient().from("problem_status").update({ is_open: open }).eq("problem_id", problemId);
+  if (error) throw new Error(`set open failed: ${error.message}`);
+}
+
+export async function deleteProblem(problemId: number) {
+  const admin = adminClient();
+  const { data: subs } = await admin.from("submissions").select("id").eq("problem_id", problemId);
+  const ids = (subs ?? []).map((s) => s.id);
+  if (ids.length) {
+    await admin.from("results").delete().in("submission_id", ids);
+    await admin.from("submissions").delete().in("id", ids);
+  }
+  await admin.from("problems").delete().eq("id", problemId);
+}
+
+/** ส่งคำตอบในนามนิสิต (ผ่าน submit_answer จริง) */
+export async function submitAs(student: TestStudent, problemId: number, sql = "SELECT 1;") {
+  const client = anonClient();
+  await client.auth.signInWithPassword({ email: `${student.studentId}@quiz.local`, password: student.password });
+  const { data, error } = await client.rpc("submit_answer", { p_problem_id: problemId, p_sql_text: sql });
+  if (error) throw new Error(`submit failed: ${error.message}`);
+  return data;
+}

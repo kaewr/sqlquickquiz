@@ -5,7 +5,7 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 3)
+- ระยะที่กำลังทำ: 3 — โค้ดและเทสต์เสร็จ (Playwright 40 ข้อ ผ่าน 3 รอบติด, pgTAP 169) รอ: push migration `realtime_broadcast` ขึ้น project จริง + deploy แล้วทดลองบน Vercel
 - ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`)
 - งานค้าง / หมายเหตุ:
   - ระยะ 2 ใช้งานจริงแล้ว: Google login บน Vercel ผ่าน, นำเข้า CSV ตอน 1 จำนวน 110 คนบน project จริงแล้ว (2026-11-09)
@@ -13,6 +13,8 @@
   - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
   - ตรวจค่าตั้ง project จริงแบบอ่านอย่างเดียว: `npx supabase config diff`, `npx supabase db query --remote --read-only "<sql>"` — ห้ามใช้ `config push` (จะส่ง site_url localhost ขึ้นไป)
   - `.env.local` ชี้ Supabase บนเครื่องแล้ว (ค่า project จริงเป็นคอมเมนต์ในไฟล์); Playwright บังคับว่าต้องเป็น local
+  - ระยะ 3: แท็บโจทย์อยู่ที่ `src/components/student/current-problems.tsx` (realtime/polling/resync) + `problem-card.tsx`; ข้อมูลผ่าน `src/lib/current-problems.ts` (ใช้ได้ทั้ง server/browser); ส่งผ่าน server action `src/app/actions/submit.ts`
+  - เทสต์ polling รัน dev server ตัวที่สอง (port 3001, `NEXT_DIST_DIR=.next-polling`, โปรเจกต์ Playwright `polling`)
   - Next 16: `src/proxy.ts` ต่ออายุ session; หน้าที่อ่าน session อยู่ใน `<Suspense>`; `createClient()` ฝั่งเซิร์ฟเวอร์เรียก `await connection()` ก่อน (Cache Components)
   - ตรวจสิทธิ์รวมที่ `src/lib/auth.ts` (`getViewer`, `requireInstructor`); service key อยู่ที่ `src/lib/supabase/admin.ts` (`server-only`); ข้อความไทยที่ `src/lib/errors.ts`
   - ปิดการสมัครเองแล้วทั้ง local (`config.toml`) และ project จริง (Dashboard, ตรวจแล้ว `disable_signup: true`)
@@ -57,7 +59,7 @@
 | Frontend + server routes | Next.js (App Router) + TypeScript + Tailwind CSS |
 | ฐานข้อมูล | Supabase PostgreSQL, migration ด้วย Supabase CLI ใน `supabase/migrations/` |
 | Auth | Supabase Auth: นิสิตใช้อีเมลภายใน + รหัสผ่าน, อาจารย์ใช้ Google |
-| Realtime | Supabase Realtime (Postgres Changes) |
+| Realtime | Supabase Realtime — **Broadcast จากฐานข้อมูล** (trigger เรียก `realtime.send`) ช่องแบบ private + RLS บน `realtime.messages` |
 | เทสต์ฐานข้อมูล/RLS | pgTAP ผ่าน `supabase test db` บน Supabase local |
 | เทสต์หน้าเว็บ | Playwright |
 | พัฒนาในเครื่อง | `supabase start` (ใช้ Docker) + `next dev` |
@@ -136,9 +138,17 @@
 
 ## Realtime
 
-- หน้านิสิต subscribe `problem_status` เพื่อเห็นโจทย์ที่เพิ่งเปิด, จำนวนคนส่ง และการปิดข้อทันที
-- หน้าอาจารย์ subscribe `submissions` ของข้อที่เปิดดูอยู่
-- มีค่าตั้ง `NEXT_PUBLIC_COUNT_MODE` = `realtime` (ค่าเริ่มต้น) หรือ `polling` (ถามทุก 5 วินาที) สำหรับตัวนับฝั่งนิสิต เผื่อใกล้เพดานข้อความ realtime ของแผนฟรี — สถานะเปิด/ปิดใช้ realtime เสมอ
+ใช้ **Broadcast จากฐานข้อมูล** ไม่ใช้ Postgres Changes — เพราะตัวนับกับ `is_open` อยู่แถวเดียวกัน Postgres Changes จะส่งทุกการเปลี่ยนตัวนับให้ทุกคน ทำให้โหมด polling ประหยัดข้อความไม่ได้จริง
+
+| topic | ส่งเมื่อ (trigger บน `problem_status`) | payload | ใคร subscribe |
+| --- | --- | --- | --- |
+| `problem-state` | `is_open` เปลี่ยน | `problem_id, is_open` | หน้านิสิต **เสมอ** |
+| `problem-counts` | `submission_count` เปลี่ยน | `problem_id, submission_count` | หน้านิสิตเฉพาะ `NEXT_PUBLIC_COUNT_MODE=realtime` |
+
+- ช่องเป็น private: RLS บน `realtime.messages` ให้รับได้เฉพาะนิสิตที่ `is_active` และอาจารย์ — payload ไม่มีเนื้อหาโจทย์/เฉลย หน้าเว็บดึงเนื้อหาผ่าน RLS เอง
+- `NEXT_PUBLIC_COUNT_MODE` = `realtime` (ค่าเริ่มต้น) หรือ `polling` (ถามตัวนับทุก 5 วินาที และไม่ subscribe `problem-counts`) — สถานะเปิด/ปิดใช้ realtime เสมอ
+- หน้าเว็บดึงสถานะใหม่ทั้งหมดเมื่อ realtime ต่อกลับมาได้หรือแท็บกลับมาแสดง (กันพลาดเหตุการณ์ตอนหลุด)
+- หน้าอาจารย์ (ระยะ 4) ดูการส่งของข้อที่เปิดดูอยู่ด้วย Broadcast แบบเดียวกัน
 
 ## การตัดสินใจที่ตกลงแล้ว
 

@@ -19,6 +19,11 @@ const MESSAGES: Record<string, string> = {
   STUDENT_NOT_FOUND: "ไม่พบนิสิตคนนี้",
   STUDENT_HAS_SUBMISSIONS: "ลบไม่ได้ เพราะนิสิตคนนี้เคยส่งคำตอบแล้ว ให้ปิดบัญชีแทน",
   INVALID_INPUT: "ข้อมูลที่ส่งไม่ถูกต้อง",
+  // ส่งคำตอบ (รหัสจาก submit_answer)
+  NOT_STUDENT: "บัญชีนี้ส่งคำตอบไม่ได้ (ไม่ใช่นิสิต หรือบัญชีถูกปิด)",
+  INVALID_SQL_TEXT: "คำสั่ง SQL ต้องไม่ว่างและยาวไม่เกิน 10,000 ตัวอักษร",
+  PROBLEM_CLOSED: "ปิดรับคำตอบแล้ว",
+  ALREADY_SUBMITTED: "คุณส่งคำตอบข้อนี้ไปแล้ว ส่งซ้ำไม่ได้",
   // ปัญหาการตั้งค่าเซิร์ฟเวอร์ (ดู log ใน Vercel)
   SERVER_MISCONFIGURED: "ระบบยังตั้งค่าไม่ครบ: ไม่พบ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์",
   SERVICE_KEY_REJECTED: "Supabase ปฏิเสธ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์ (ค่าไม่ถูกต้องหรือเป็นของ project อื่น)",
