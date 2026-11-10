@@ -92,3 +92,16 @@ export async function setProblemOpen(problemId: number, open: boolean): Promise<
   }
   return {};
 }
+
+/** ลบโจทย์ (แม้มีคนส่งแล้ว) — ฐานข้อมูลตรวจสิทธิ์อาจารย์และชื่อยืนยันอีกชั้น */
+export async function deleteProblem(problemId: number, confirmTitle: string): Promise<{ error?: string }> {
+  const supabase = await instructorClient();
+  if (!supabase) return { error: thaiError("NOT_INSTRUCTOR") };
+  const { error } = await supabase.rpc("delete_problem", { p_problem_id: problemId, p_confirm_title: confirmTitle });
+  if (error) {
+    const known = ["CONFIRM_TITLE_MISMATCH", "PROBLEM_NOT_FOUND", "NOT_INSTRUCTOR"];
+    if (!known.includes(error.message)) console.error("[deleteProblem]", error);
+    return { error: thaiError(known.includes(error.message) ? error.message : "DB_ERROR") };
+  }
+  redirect(`/admin/problems?deleted=${encodeURIComponent(confirmTitle)}`);
+}

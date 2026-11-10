@@ -20,7 +20,7 @@ type StatusRow = { is_open: boolean; submission_count: number; opened_at: string
 /** มุมมองรายวัน: โจทย์ที่เปิดครั้งแรกในวันที่เลือก (Asia/Bangkok) + โจทย์ที่ยังไม่เคยเปิด */
 async function Daily({ searchParams }: { searchParams: PageProps<"/admin/problems">["searchParams"] }) {
   const supabase = await createClient(); // ต้องมาก่อน new Date() (อ่านตอน request)
-  const { date } = await searchParams;
+  const { date, deleted } = await searchParams;
   const today = bangkokToday();
   const day = isIsoDate(date) ? date : today;
 
@@ -69,6 +69,12 @@ async function Daily({ searchParams }: { searchParams: PageProps<"/admin/problem
           สร้างโจทย์ใหม่
         </Link>
       </div>
+
+      {typeof deleted === "string" && (
+        <p role="status" className="alert alert-success" data-testid="deleted-notice">
+          ลบโจทย์ “{deleted}” แล้ว
+        </p>
+      )}
 
       <form className="flex flex-wrap items-end gap-2" action="/admin/problems">
         <Link href={`/admin/problems?date=${shiftDate(day, -1)}`} className="btn btn-secondary" aria-label="วันก่อนหน้า">

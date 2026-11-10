@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminGate } from "@/components/admin/admin-gate";
 import { SubmissionsMonitor } from "@/components/admin/submissions-monitor";
 import { Markdown } from "@/components/markdown";
+import { DeleteProblem } from "@/components/admin/delete-problem";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminProblem, parseId } from "@/lib/admin-problems";
 import { fetchActiveRoster, fetchSubmissions } from "@/lib/admin-submissions";
@@ -87,6 +88,8 @@ async function Detail({ params }: { params: PageProps<"/admin/problems/[id]">["p
         initialSubmissions={submissions}
         roster={roster}
       />
+
+      <DeleteProblem problemId={problem.id} title={problem.title} />
     </div>
   );
 }

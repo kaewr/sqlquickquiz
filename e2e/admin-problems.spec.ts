@@ -42,7 +42,7 @@ test("ครบวง: อาจารย์สร้างโจทย์ → �
 
   // สร้างโจทย์พร้อมดูตัวอย่าง markdown
   await page.goto("/admin/problems/new");
-  await page.getByLabel("ชื่อโจทย์").fill("E2E นับเมือง");
+  await page.getByLabel("ชื่อโจทย์", { exact: true }).fill("E2E นับเมือง");
   await page.getByLabel("คำอธิบาย (markdown)", { exact: true }).fill("นับจำนวน **เมือง** ทั้งหมด");
   await page.getByLabel("ตัวอย่างผลลัพธ์ (markdown — ตารางใช้ | คอลัมน์ |)", { exact: true }).fill("| cnt |\n| --- |\n| 4079 |");
   await page.getByRole("group", { name: /มุมมอง ตัวอย่างผลลัพธ์/ }).getByRole("button", { name: "ตัวอย่าง" }).click();
@@ -123,7 +123,7 @@ test("แก้ไขโจทย์ที่มีคนส่งแล้ว: 
   await page.getByRole("button", { name: "บันทึกการแก้ไข" }).click();
   await expect(page.getByText("คะแนนเต็มต่ำกว่าคะแนนที่ให้นิสิตไปแล้ว")).toBeVisible();
 
-  await page.getByLabel("ชื่อโจทย์").fill("หลังแก้");
+  await page.getByLabel("ชื่อโจทย์", { exact: true }).fill("หลังแก้");
   await page.getByLabel("คะแนนเต็ม").fill("10");
   await page.getByRole("button", { name: "บันทึกการแก้ไข" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/problems/${id}$`));
@@ -137,7 +137,7 @@ test("คัดลอกโจทย์: ได้โจทย์ใหม่ท
   await page.getByRole("link", { name: "คัดลอก" }).click();
 
   await expect(page.getByRole("heading", { name: "คัดลอกโจทย์" })).toBeVisible();
-  await expect(page.getByLabel("ชื่อโจทย์")).toHaveValue("ต้นฉบับ (สำเนา)");
+  await expect(page.getByLabel("ชื่อโจทย์", { exact: true })).toHaveValue("ต้นฉบับ (สำเนา)");
   await expect(page.getByLabel("คำสั่งเฉลย (นิสิตไม่เห็น)")).toHaveValue("SELECT SECRET_SOLUTION;");
   await page.getByRole("button", { name: "บันทึกโจทย์" }).click();
 
@@ -216,4 +216,66 @@ test("นิสิตเข้าหน้าโจทย์ของอาจ�
   }
   await expect(page.getByText("SECRET_SOLUTION")).toHaveCount(0);
   await setProblemOpen(id, false);
+});
+
+test("ลบโจทย์ที่มีคนส่งแล้ว: แจ้งผลกระทบ, ต้องพิมพ์ชื่อตรง, นิสิตเห็นปิดทันที, ข้อมูลหายหมด", async ({ page, browser, baseURL }) => {
+  const done = await newStudent();
+  const watcher = await newStudent();
+  const id = await newProblem({ title: "ข้อทดลองที่จะลบ", open: true });
+  await submitAs(done, id);
+  const admin = adminClient();
+  const { data: sub } = await admin.from("submissions").select("id").eq("problem_id", id).single();
+  await admin.from("results").insert({ submission_id: sub!.id, score: 10, verdict: "correct" });
+
+  // นิสิตอีกคนเปิดหน้าโจทย์ค้างไว้
+  const sctx = await browser.newContext({ baseURL, locale: "th-TH", timezoneId: "Asia/Bangkok" });
+  await sctx.addCookies(await sessionCookies(`${watcher.studentId}@quiz.local`, watcher.password, baseURL!));
+  const spage = await sctx.newPage();
+  await spage.goto("/");
+  await connected(spage);
+  await expect(spage.getByTestId(`problem-${id}`).getByTestId("problem-status")).toHaveText("เปิดรับคำตอบ");
+
+  await asInstructor(page, baseURL!);
+  await page.goto(`/admin/problems/${id}`);
+  await page.getByRole("button", { name: "ลบโจทย์นี้…" }).click();
+  const dialog = page.getByRole("dialog", { name: "⚠️ ลบโจทย์ถาวร" });
+  await expect(dialog.getByTestId("impact-submissions")).toHaveText("1");
+  await expect(dialog.getByTestId("impact-results")).toHaveText("1");
+  await expect(dialog.getByTestId("delete-impact")).toContainText("นิสิตที่กำลังทำจะเห็นว่าปิดรับคำตอบทันที");
+
+  const confirmBtn = dialog.getByRole("button", { name: "ลบถาวร" });
+  await dialog.getByLabel("พิมพ์ชื่อโจทย์เพื่อยืนยัน").fill("ข้อทดลองที่จะ");
+  await expect(confirmBtn).toBeDisabled();
+  await dialog.getByLabel("พิมพ์ชื่อโจทย์เพื่อยืนยัน").fill("ข้อทดลองที่จะลบ");
+  await expect(confirmBtn).toBeEnabled();
+  await confirmBtn.click();
+
+  await expect(page).toHaveURL(/\/admin\/problems\?deleted=/);
+  await expect(page.getByTestId("deleted-notice")).toHaveText("ลบโจทย์ “ข้อทดลองที่จะลบ” แล้ว");
+  await expect(page.getByTestId(`board-row-${id}`)).toHaveCount(0);
+
+  // นิสิตที่เปิดหน้าอยู่เห็นปิดทันที
+  await expect(spage.getByTestId(`problem-${id}`).getByTestId("problem-status")).toHaveText("ปิดรับคำตอบแล้ว");
+  await sctx.close();
+
+  // ข้อมูลหายหมด
+  const [{ count: p }, { count: s }, { count: r }] = await Promise.all([
+    admin.from("problems").select("id", { count: "exact", head: true }).eq("id", id),
+    admin.from("submissions").select("id", { count: "exact", head: true }).eq("problem_id", id),
+    admin.from("results").select("id", { count: "exact", head: true }).eq("submission_id", sub!.id),
+  ]);
+  expect([p, s, r]).toEqual([0, 0, 0]);
+});
+
+test("ลบโจทย์ร่างที่ยังไม่มีคนส่ง", async ({ page, baseURL }) => {
+  const id = await newProblem({ title: "ร่างที่จะลบ", open: false });
+  await asInstructor(page, baseURL!);
+  await page.goto(`/admin/problems/${id}`);
+  await page.getByRole("button", { name: "ลบโจทย์นี้…" }).click();
+  const dialog = page.getByRole("dialog", { name: "⚠️ ลบโจทย์ถาวร" });
+  await expect(dialog.getByTestId("impact-submissions")).toHaveText("0");
+  await expect(dialog.getByTestId("delete-impact")).not.toContainText("เปิดรับคำตอบอยู่");
+  await dialog.getByLabel("พิมพ์ชื่อโจทย์เพื่อยืนยัน").fill("ร่างที่จะลบ");
+  await dialog.getByRole("button", { name: "ลบถาวร" }).click();
+  await expect(page.getByTestId("deleted-notice")).toBeVisible();
 });
