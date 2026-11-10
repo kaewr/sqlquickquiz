@@ -5,7 +5,7 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 4)
+- ระยะที่กำลังทำ: 4 — โค้ดและเทสต์เสร็จ (Playwright 47 ข้อ ผ่าน 2 รอบติด, pgTAP 180) รอ: push migration `admin_problems` + deploy แล้วทดลองครบวงบน Vercel
 - ระยะที่เสร็จแล้ว: 0 (`phase-0`), 1 (`phase-1`), 2 (`phase-2`), 3 (`phase-3`)
 - งานค้าง / หมายเหตุ:
   - ระยะ 3 ขึ้น project จริงแล้ว (migration `realtime_broadcast`) แต่ realtime บน project จริงยังไม่ได้ทดสอบกับนิสิตจริง — ทดสอบตอนระยะ 4 เมื่อมีหน้าเปิดโจทย์
@@ -14,6 +14,8 @@
   - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
   - ตรวจค่าตั้ง project จริงแบบอ่านอย่างเดียว: `npx supabase config diff`, `npx supabase db query --remote --read-only "<sql>"` — ห้ามใช้ `config push` (จะส่ง site_url localhost ขึ้นไป)
   - `.env.local` ชี้ Supabase บนเครื่องแล้ว (ค่า project จริงเป็นคอมเมนต์ในไฟล์); Playwright บังคับว่าต้องเป็น local
+  - ระยะ 4: หน้าอาจารย์ `/admin/problems` (รายวัน+ร่าง), `/new` (`?from=` = คัดลอก), `/[id]` (ผู้ส่ง realtime + ยังไม่ส่ง), `/[id]/edit`; server action `src/app/actions/problems.ts` ใช้ session อาจารย์ (ไม่ใช้ service key); hook `src/lib/use-broadcast.ts`
+  - Cache Components เก็บหน้าก่อนหน้าไว้ใน DOM แบบซ่อน (`<Activity>`) — ใน Playwright ใช้ `.filter({ visible: true })` เมื่อ testid ซ้ำได้หลังเปลี่ยนหน้า
   - ระยะ 3: แท็บโจทย์อยู่ที่ `src/components/student/current-problems.tsx` (realtime/polling/resync) + `problem-card.tsx`; ข้อมูลผ่าน `src/lib/current-problems.ts` (ใช้ได้ทั้ง server/browser); ส่งผ่าน server action `src/app/actions/submit.ts`
   - เทสต์ polling รัน dev server ตัวที่สอง (port 3001, `NEXT_DIST_DIR=.next-polling`, โปรเจกต์ Playwright `polling`)
   - Next 16: `src/proxy.ts` ต่ออายุ session; หน้าที่อ่าน session อยู่ใน `<Suspense>`; `createClient()` ฝั่งเซิร์ฟเวอร์เรียก `await connection()` ก่อน (Cache Components)
@@ -149,7 +151,7 @@
 - ช่องเป็น private: RLS บน `realtime.messages` ให้รับได้เฉพาะนิสิตที่ `is_active` และอาจารย์ — payload ไม่มีเนื้อหาโจทย์/เฉลย หน้าเว็บดึงเนื้อหาผ่าน RLS เอง
 - `NEXT_PUBLIC_COUNT_MODE` = `realtime` (ค่าเริ่มต้น) หรือ `polling` (ถามตัวนับทุก 5 วินาที และไม่ subscribe `problem-counts`) — สถานะเปิด/ปิดใช้ realtime เสมอ
 - หน้าเว็บดึงสถานะใหม่ทั้งหมดเมื่อ realtime ต่อกลับมาได้หรือแท็บกลับมาแสดง (กันพลาดเหตุการณ์ตอนหลุด)
-- หน้าอาจารย์ (ระยะ 4) ดูการส่งของข้อที่เปิดดูอยู่ด้วย Broadcast แบบเดียวกัน
+- หน้าอาจารย์ดูการส่งของข้อที่เปิดดูอยู่ผ่าน topic `problem-submissions:<problem_id>` (trigger หลัง insert `submissions`, payload `submission_id, submit_order` ไม่มี SQL, รับได้เฉพาะอาจารย์) แล้วดึงรายละเอียดผ่าน RLS เอง
 
 ## การตัดสินใจที่ตกลงแล้ว
 
@@ -157,7 +159,8 @@
 | --- | --- |
 | การส่ง | ส่งได้ครั้งเดียวต่อข้อ ห้ามแก้ |
 | เวลาส่ง | เวลาของฐานข้อมูลเท่านั้น |
-| เปิดโจทย์ | อาจารย์เปิด/ปิดรายข้อ เปิดพร้อมกันได้หลายข้อ |
+| เปิดโจทย์ | อาจารย์เปิด/ปิดรายข้อ เปิดพร้อมกันได้หลายข้อ · สร้างโจทย์ไว้ล่วงหน้าได้ (ยังไม่เปิด = นิสิตไม่เห็น) · “วันของโจทย์” = วันที่เปิดครั้งแรก (Asia/Bangkok) |
+| แก้/ลบโจทย์ | แก้ได้แม้มีคนส่งแล้ว (แสดงคำเตือน) แต่คะแนนเต็มต้องไม่ต่ำกว่าคะแนนที่ให้แล้ว (`MAX_SCORE_BELOW_GIVEN` บังคับที่ฐานข้อมูล) · ยังไม่มีการลบโจทย์ · คำสั่งเฉลยไม่บังคับแต่เตือนถ้าว่าง |
 | รหัสผ่านเริ่มต้น | รหัสนิสิต ไม่บังคับเปลี่ยน แต่เตือนตลอดจนกว่าจะเปลี่ยน |
 | ประกาศผล | ปุ่มเดียวต่อข้อ: แจ้งผลในประวัตินิสิต + เปิดลิงก์อันดับพร้อมกัน |
 | หน้าอันดับ | เรียงตามเวลาส่ง, รหัสนิสิตแบบปิดบางส่วน (เช่น `65xxxx678`), คะแนน, ไม่แสดง SQL และชื่อ |

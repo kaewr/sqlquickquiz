@@ -10,6 +10,9 @@ export function AdminShell({ email, children }: { email: string; children: React
             <Link href="/admin" className="font-semibold">
               SQL Quick Quiz · อาจารย์
             </Link>
+            <Link href="/admin/problems" className="text-sm text-foreground/70 hover:text-foreground">
+              โจทย์
+            </Link>
             <Link href="/admin/students" className="text-sm text-foreground/70 hover:text-foreground">
               นิสิต
             </Link>

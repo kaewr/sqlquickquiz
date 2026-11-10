@@ -16,6 +16,10 @@ async function AdminHome({ searchParams }: { searchParams: PageProps<"/admin">["
     <AdminGate errorCode={typeof error === "string" ? error : undefined}>
       <h1 className="text-xl font-semibold">หน้าอาจารย์</h1>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <Link href="/admin/problems" className="card hover:bg-muted">
+          <p className="font-medium">โจทย์</p>
+          <p className="mt-1 text-sm text-foreground/60">สร้าง/แก้/คัดลอกโจทย์, เปิด/ปิดรับคำตอบ, มุมมองรายวัน, ดูการส่งแบบ realtime</p>
+        </Link>
         <Link href="/admin/students" className="card hover:bg-muted">
           <p className="font-medium">จัดการนิสิต</p>
           <p className="mt-1 text-sm text-foreground/60">นำเข้ารายชื่อ CSV, รีเซ็ตรหัสผ่าน, ปิด/เปิดบัญชี</p>
