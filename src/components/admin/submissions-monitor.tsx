@@ -32,6 +32,13 @@ export function SubmissionsMonitor({
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [section, setSection] = useState("");
   const [pageSize, setPageSize] = useState<number>(20); // 0 = ทั้งหมด
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "order", dir: "asc" });
+  // คะแนนที่ใช้เรียง "แช่แข็ง" ไว้ตอนเลือกการเรียง — ให้คะแนนแล้วแถวไม่กระโดดหนี
+  // (คำนวณใหม่เมื่อคลิกหัวคอลัมน์ หรือมีคนส่งเพิ่ม)
+  const [frozen, setFrozen] = useState(() => ({ count: initialSubmissions.length, scores: scoreMap(initialSubmissions) }));
+  if (frozen.count !== submissions.length) {
+    setFrozen({ count: submissions.length, scores: scoreMap(submissions) });
+  }
   const [page, setPage] = useState(1);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -87,10 +94,30 @@ export function SubmissionsMonitor({
   const onGraded = (id: number) => (result: NonNullable<AdminSubmission["result"]>) =>
     setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, result } : s)));
 
-  // แบ่งหน้า (หน้าละ 20 เป็นค่าเริ่มต้น, 0 = แสดงทั้งหมด)
-  const pageCount = pageSize ? Math.max(1, Math.ceil(shownSubs.length / pageSize)) : 1;
+  // เรียงก่อน แล้วจึงแบ่งหน้า (หน้าละ 20 เป็นค่าเริ่มต้น, 0 = แสดงทั้งหมด)
+  const sortedSubs = sortSubmissions(shownSubs, sort.key, sort.dir, frozen.scores);
+  const pageCount = pageSize ? Math.max(1, Math.ceil(sortedSubs.length / pageSize)) : 1;
   const currentPage = Math.min(page, pageCount);
-  const pageSubs = pageSize ? shownSubs.slice((currentPage - 1) * pageSize, currentPage * pageSize) : shownSubs;
+  const pageSubs = pageSize ? sortedSubs.slice((currentPage - 1) * pageSize, currentPage * pageSize) : sortedSubs;
+
+  function toggleSort(key: SortKey) {
+    setSort((cur) => ({ key, dir: cur.key === key && cur.dir === "asc" ? "desc" : "asc" }));
+    setFrozen({ count: submissions.length, scores: scoreMap(submissions) });
+    setPage(1);
+  }
+  const header = (key: SortKey, label: string, className = "") => (
+    <th
+      className={`px-3 py-2 ${className}`}
+      aria-sort={sort.key === key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <button type="button" className="inline-flex items-center gap-1 font-semibold hover:underline" onClick={() => toggleSort(key)}>
+        {label}
+        <span aria-hidden className="text-xs text-foreground/50">
+          {sort.key === key ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -157,10 +184,10 @@ export function SubmissionsMonitor({
           <table className="w-full min-w-[52rem] text-sm">
             <thead className="bg-muted text-left">
               <tr>
-                <th className="w-14 px-3 py-2 text-right">ลำดับ</th>
-                <th className="px-3 py-2">รหัสนิสิต</th>
-                <th className="px-3 py-2">เวลา</th>
-                <th className="px-3 py-2">คะแนน</th>
+                {header("order", "ลำดับ", "w-20 text-right")}
+                {header("student", "รหัสนิสิต")}
+                {header("time", "เวลา")}
+                {header("score", "คะแนน")}
                 <th className="px-3 py-2">ความเห็น</th>
               </tr>
             </thead>
@@ -255,4 +282,36 @@ function Pager({
       )}
     </nav>
   );
+}
+
+type SortKey = "order" | "student" | "time" | "score";
+
+function scoreMap(subs: AdminSubmission[]): Map<number, number | null> {
+  return new Map(subs.map((s) => [s.id, s.result ? s.result.score : null]));
+}
+
+/** เรียงตามคอลัมน์ — คะแนน: คนที่ยังไม่ให้คะแนนอยู่ท้ายเสมอ, คะแนนเท่ากันเรียงตามลำดับการส่ง */
+function sortSubmissions(
+  subs: AdminSubmission[],
+  key: SortKey,
+  dir: "asc" | "desc",
+  scores: Map<number, number | null>,
+): AdminSubmission[] {
+  const sign = dir === "asc" ? 1 : -1;
+  return [...subs].sort((a, b) => {
+    if (key === "score") {
+      const sa = scores.has(a.id) ? scores.get(a.id)! : (a.result?.score ?? null);
+      const sb = scores.has(b.id) ? scores.get(b.id)! : (b.result?.score ?? null);
+      if (sa === null && sb === null) return a.submit_order - b.submit_order;
+      if (sa === null) return 1;
+      if (sb === null) return -1;
+      return sa !== sb ? sign * (sa - sb) : a.submit_order - b.submit_order;
+    }
+    if (key === "student") return sign * a.student_id.localeCompare(b.student_id);
+    if (key === "time") {
+      const d = Date.parse(a.submitted_at) - Date.parse(b.submitted_at);
+      return sign * (d !== 0 ? d : a.submit_order - b.submit_order);
+    }
+    return sign * (a.submit_order - b.submit_order);
+  });
 }

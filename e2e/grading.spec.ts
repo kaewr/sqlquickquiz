@@ -183,14 +183,30 @@ test("แบ่งหน้าตารางผู้ส่ง: หน้าล
   test.setTimeout(120_000);
   const id = await createProblem();
   problems.push(id);
-  for (let i = 0; i < 25; i++) await submitAs(await newStudent(), id);
+  let last: TestStudent | null = null;
+  for (let i = 0; i < 25; i++) {
+    last = await newStudent();
+    await submitAs(last, id);
+  }
+  // คนที่ส่งคนสุดท้าย (อยู่หน้า 2 เมื่อเรียงตามลำดับ) ได้คะแนนเต็ม
+  const { adminClient } = await import("./support/supabase");
+  const { data: lastSub } = await adminClient().from("submissions").select("id").eq("student_user_id", last!.userId).single();
+  await adminClient().from("results").insert({ submission_id: lastSub!.id, score: 10, verdict: "correct" });
 
   await context.addCookies(await sessionCookies(INSTRUCTOR.email, INSTRUCTOR.password, baseURL!));
   await page.goto(`/admin/problems/${id}`);
   const rows = page.locator('tr[data-testid^="sub-row-"]');
   await expect(rows).toHaveCount(20);
   await expect(page.getByTestId("page-indicator").first()).toHaveText("หน้า 1 / 2");
-  await expect(page.getByTestId("grading-progress")).toHaveText("ให้คะแนนแล้ว 0 / 25"); // นับทุกคน
+  await expect(page.getByTestId("grading-progress")).toHaveText("ให้คะแนนแล้ว 1 / 25"); // นับทุกคน
+  await expect(page.getByTestId(`sub-row-${last!.studentId}`)).toHaveCount(0); // อยู่หน้า 2
+
+  // เรียงคะแนนมากไปน้อย → เรียงจากทุกคนก่อนแบ่งหน้า: คนได้เต็มขึ้นแถวแรกของหน้า 1
+  await page.getByRole("columnheader", { name: /คะแนน/ }).getByRole("button").click();
+  await page.getByRole("columnheader", { name: /คะแนน/ }).getByRole("button").click();
+  await expect(rows.first()).toHaveAttribute("data-testid", `sub-row-${last!.studentId}`);
+  await expect(page.getByTestId("page-indicator").first()).toHaveText("หน้า 1 / 2");
+  await page.getByRole("columnheader", { name: /ลำดับ/ }).getByRole("button").click(); // กลับเรียงตามลำดับน้อยไปมาก
 
   await page.getByRole("button", { name: "ถัดไป ›" }).first().click();
   await expect(rows).toHaveCount(5);
@@ -199,4 +215,65 @@ test("แบ่งหน้าตารางผู้ส่ง: หน้าล
   await page.getByLabel("จำนวนต่อหน้า").selectOption({ label: "ทั้งหมด" });
   await expect(rows).toHaveCount(25);
   await expect(page.getByTestId("page-indicator")).toHaveCount(0);
+});
+
+test("เรียงตารางผู้ส่งตามลำดับ / รหัส / เวลา / คะแนน ทั้งสองทาง; ยังไม่ให้คะแนนอยู่ท้าย; ให้คะแนนแล้วแถวไม่กระโดด", async ({
+  page,
+  baseURL,
+  context,
+}) => {
+  const [a, b, c, d] = [await newStudent(), await newStudent(), await newStudent(), await newStudent()];
+  const id = await createProblem();
+  problems.push(id);
+  for (const s of [a, b, c, d]) await submitAs(s, id);
+  const { adminClient } = await import("./support/supabase");
+  const admin = adminClient();
+  const { data: subs } = await admin.from("submissions").select("id, student_user_id").eq("problem_id", id);
+  const subOf = (s: TestStudent) => subs!.find((x) => x.student_user_id === s.userId)!.id;
+  await admin.from("results").insert([
+    { submission_id: subOf(a), score: 5, verdict: "partial" },
+    { submission_id: subOf(b), score: 10, verdict: "correct" },
+    { submission_id: subOf(d), score: 0, verdict: "incorrect" },
+  ]); // c ยังไม่ให้คะแนน
+
+  await context.addCookies(await sessionCookies(INSTRUCTOR.email, INSTRUCTOR.password, baseURL!));
+  await page.goto(`/admin/problems/${id}`);
+  const order = async () =>
+    (await page.locator('tr[data-testid^="sub-row-"]').evaluateAll((rows) => rows.map((r) => r.getAttribute("data-testid")!.slice(8))));
+  const expectOrder = async (list: TestStudent[]) => expect.poll(order).toEqual(list.map((s) => s.studentId));
+  const sortBy = (name: string) => page.getByRole("columnheader", { name: new RegExp(name) }).getByRole("button").click();
+
+  await expectOrder([a, b, c, d]); // ค่าเริ่มต้น: ลำดับน้อยไปมาก
+  await expect(page.getByRole("columnheader", { name: /ลำดับ/ })).toHaveAttribute("aria-sort", "ascending");
+
+  await sortBy("ลำดับ");
+  await expectOrder([d, c, b, a]);
+  await expect(page.getByRole("columnheader", { name: /ลำดับ/ })).toHaveAttribute("aria-sort", "descending");
+
+  await sortBy("คะแนน");
+  await expectOrder([d, a, b, c]); // 0, 5, 10, ยังไม่ให้คะแนน
+  await sortBy("คะแนน");
+  await expectOrder([b, a, d, c]); // 10, 5, 0, ยังไม่ให้คะแนน (ท้ายเสมอ)
+
+  await sortBy("เวลา");
+  await expectOrder([a, b, c, d]);
+  await sortBy("เวลา");
+  await expectOrder([d, c, b, a]);
+
+  const byId = [a, b, c, d].sort((x, y) => x.studentId.localeCompare(y.studentId));
+  await sortBy("รหัสนิสิต");
+  await expectOrder(byId);
+  await sortBy("รหัสนิสิต");
+  await expectOrder([...byId].reverse());
+
+  // เรียงตามคะแนนน้อยไปมาก แล้วให้ d (0 คะแนน, แถวแรก) เต็ม → แถวไม่กระโดด
+  await sortBy("คะแนน");
+  await expectOrder([d, a, b, c]);
+  const gd = page.getByTestId(`grade-${d.studentId}`);
+  await gd.getByRole("button", { name: "เต็ม", exact: true }).click();
+  await expect(gd.getByTestId("grade-verdict")).toHaveText("ถูก 10/10");
+  await expectOrder([d, a, b, c]);
+  // คลิกหัวคอลัมน์ใหม่ → เรียงตามคะแนนล่าสุด (มากไปน้อย; b กับ d ได้ 10 เท่ากัน → เรียงตามลำดับการส่ง b ก่อน d)
+  await sortBy("คะแนน");
+  await expectOrder([b, d, a, c]);
 });
