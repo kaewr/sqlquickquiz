@@ -5,36 +5,30 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 6 — โค้ดและเทสต์เสร็จ (Playwright 63 ข้อ ผ่าน 2 รอบติด, pgTAP 212) ไม่มี migration ใหม่ รอ: push + deploy
-- ระยะที่เสร็จแล้ว: 0–5 (`phase-0` … `phase-5`, ส่วนเสริมลบโจทย์ `phase-4.1`)
-- งานค้าง / หมายเหตุ:
-  - project จริง: migration ถึง `grading` แล้ว — realtime บน project จริงรอผู้ใช้ทดลองครบวงครั้งแรก (สร้าง → เปิด → นิสิตส่ง → ปิด)
-  - ระยะ 2 ใช้งานจริงแล้ว: Google login บน Vercel ผ่าน, นำเข้า CSV ตอน 1 จำนวน 110 คนบน project จริงแล้ว (2026-11-09)
-  - commit `ec3ae20` (ข้อความไทยเมื่อ service key ผิด/หาย) **ยังไม่ push** — ถามผู้ใช้ก่อน push
-  - project จริง: migration ถึง `accounts` แล้ว, ตั้ง min password 8 / rate limit 1000 & 1800 / site URL / Google / ปิดสมัครเองแล้ว (ตรวจด้วย `supabase config diff`), มีบัญชี Auth ของ `pornthep.ro@up.ac.th`
-  - ตรวจค่าตั้ง project จริงแบบอ่านอย่างเดียว: `npx supabase config diff`, `npx supabase db query --remote --read-only "<sql>"` — ห้ามใช้ `config push` (จะส่ง site_url localhost ขึ้นไป)
-  - `.env.local` ชี้ Supabase บนเครื่องแล้ว (ค่า project จริงเป็นคอมเมนต์ในไฟล์); Playwright บังคับว่าต้องเป็น local
-  - ระยะ 4: หน้าอาจารย์ `/admin/problems` (รายวัน+ร่าง), `/new` (`?from=` = คัดลอก), `/[id]` (ผู้ส่ง realtime + ยังไม่ส่ง), `/[id]/edit`; server action `src/app/actions/problems.ts` ใช้ session อาจารย์ (ไม่ใช้ service key); hook `src/lib/use-broadcast.ts`
-  - Cache Components เก็บหน้าก่อนหน้าไว้ใน DOM แบบซ่อน (`<Activity>`) — ใน Playwright ใช้ `.filter({ visible: true })` เมื่อ testid ซ้ำได้หลังเปลี่ยนหน้า
-  - ระยะ 3: แท็บโจทย์อยู่ที่ `src/components/student/current-problems.tsx` (realtime/polling/resync) + `problem-card.tsx`; ข้อมูลผ่าน `src/lib/current-problems.ts` (ใช้ได้ทั้ง server/browser); ส่งผ่าน server action `src/app/actions/submit.ts`
-  - เทสต์ polling รัน dev server ตัวที่สอง (port 3001, `NEXT_DIST_DIR=.next-polling`, โปรเจกต์ Playwright `polling`)
-  - Next 16: `src/proxy.ts` ต่ออายุ session; หน้าที่อ่าน session อยู่ใน `<Suspense>`; `createClient()` ฝั่งเซิร์ฟเวอร์เรียก `await connection()` ก่อน (Cache Components)
-  - ตรวจสิทธิ์รวมที่ `src/lib/auth.ts` (`getViewer`, `requireInstructor`); service key อยู่ที่ `src/lib/supabase/admin.ts` (`server-only`); ข้อความไทยที่ `src/lib/errors.ts`
-  - ปิดการสมัครเองแล้วทั้ง local (`config.toml`) และ project จริง (Dashboard, ตรวจแล้ว `disable_signup: true`)
-  - Supabase project จริง: `anyvflatoeedytlrntmp` (region Singapore) — `supabase link` แล้ว (ไม่ push seed); คำสั่ง CLI ใช้ local เป็นค่าเริ่มต้น ต้องใส่ `--remote` เพื่อทำกับ project จริง
-  - GitHub: `kaewr/sqlquickquiz` · Vercel: https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`)
-  - ตัวแปร key ฝั่ง client ใช้ชื่อ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (key แบบ `sb_publishable_...`)
-  - Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (ดู AGENTS.md); `npm run typecheck` รัน `next typegen` ก่อน tsc
-  - Supabase CLI เป็น devDependency เรียกผ่าน `npx supabase`; แก้ค่า auth ใน `config.toml` แล้วต้อง `db:stop` + `db:start` (db reset ไม่พอ)
-  - เทสต์ pgTAP: ใช้ `\ir _helpers.psql` (สร้างผู้ใช้/โจทย์, `tests.login_as`, `tests.reset_data()` ล้าง seed ใน transaction); `070_concurrency` ใช้ dblink และ commit จริงแล้วล้างเอง
-  - รหัสข้อผิดพลาดจากฐานข้อมูล: `NOT_STUDENT`, `INVALID_SQL_TEXT`, `PROBLEM_CLOSED`, `ALREADY_SUBMITTED` (submit_answer), `NOT_INSTRUCTOR`, `PROBLEM_NOT_FOUND` (release_results), `SCORE_OUT_OF_RANGE`, `MANUAL_RESULT_PROTECTED` (results) — errcode P0001 ยกเว้น NOT_INSTRUCTOR = 42501
-  - `submitted_at` ตั้งด้วย `clock_timestamp()` หลังได้ล็อก (เรียงตามเวลาตรงกับ submit_order เสมอ)
-  - ระยะ 6: `/r/[token]` (proxy.ts ตรวจ token ก่อน render เพื่อตอบ 404 จริง → rewrite ไป `/r-missing`), รายงาน `src/lib/report.ts` + `/admin/reports`, CSV `/api/admin/reports/csv`, สำรองข้อมูล `/api/admin/backup` (fflate) — ทั้งหมดใช้ session อาจารย์ ไม่ใช้ service key
-  - เทสต์ e2e ต้องสร้างโจทย์ของตัวเองเสมอ ห้ามหยิบ "โจทย์ที่เปิดอยู่ข้อไหนก็ได้" (ชนกับเทสต์อื่นที่รันพร้อมกัน)
-  - ระยะ 5: verdict คำนวณใน `tg_results_validate` (migration `grading`); ให้คะแนนผ่าน server action `src/app/actions/grading.ts` (upsert on submission_id, ปุ่มลัดไม่แตะ feedback); ประวัตินิสิต `src/lib/history.ts` + `student-history.tsx`; ลิงก์อันดับสร้างที่ `src/lib/site-url.ts`
-  - ทดสอบบน Vercel ได้ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
-  - `npm audit`: moderate 8 รายการใน `@typescript-eslint` (devDependency) ยังไม่แก้
-  - Vercel env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_COUNT_MODE`, `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (ผู้ใช้ตั้งเอง ผมตรวจจากฝั่งนี้ไม่ได้)
+- ระยะที่กำลังทำ: — (รอคำสั่งเริ่มระยะที่ 7 — ดู `docs/HANDOFF.md`)
+- ระยะที่เสร็จแล้ว: 0–6 (tag `phase-0` … `phase-6`, ส่วนเสริมลบโจทย์ `phase-4.1`) ขึ้น project จริงและ Vercel แล้วทั้งหมด
+- ผลเทสต์ล่าสุด: Playwright 63 ข้อ (ผ่าน 2 รอบติด), pgTAP 212 ข้อ
+
+**สภาพแวดล้อม**
+- Supabase project จริง `anyvflatoeedytlrntmp` (Singapore) — `supabase link` แล้ว, migration ล่าสุด `grading` (ไม่ push seed), นิสิตตอน 1 จำนวน 110 คน, อาจารย์ `pornthep.ro@up.ac.th` ผูก Google แล้ว
+- ค่าตั้ง Auth ของ project จริง: ปิดสมัครเอง, Google เปิด, min password 8, rate limit sign-in 1000 / token refresh 1800, site URL Vercel
+- GitHub `kaewr/sqlquickquiz` · Vercel https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`) · env บน Vercel ผู้ใช้ตั้งเอง ตรวจจากฝั่งนี้ไม่ได้
+- `.env.local` ชี้ Supabase บนเครื่อง (ค่า project จริงเป็นคอมเมนต์ในไฟล์); `supabase/.env` เก็บ Google client id/secret สำหรับ local
+
+**แผนที่โค้ด**
+- สิทธิ์: `src/lib/auth.ts` (`getViewer`, `requireInstructor`) · service key เฉพาะ `src/lib/supabase/admin.ts` (`server-only`) ใช้แค่ `/api/admin/students/*` · ข้อความไทย `src/lib/errors.ts`
+- นิสิต: `src/components/student/current-problems.tsx` (realtime/polling/resync), `problem-card.tsx`, `student-history.tsx`; ส่งคำตอบ `src/app/actions/submit.ts`
+- อาจารย์: `/admin/problems` (+ `/new`, `/[id]`, `/[id]/edit`), `/admin/students`, `/admin/reports`; ให้คะแนนบันทึกตรงจากเบราว์เซอร์ `src/lib/grading.ts` (`saveGrade`); ประกาศผล `src/app/actions/grading.ts`
+- สาธารณะ: `/r/[token]` — `src/proxy.ts` ตรวจ token ก่อน render เพื่อตอบ 404 จริง (rewrite → `/r-missing`)
+- รายงาน/สำรอง: `src/lib/report.ts`, `/api/admin/reports/csv`, `/api/admin/backup` (fflate) — ใช้ session อาจารย์
+- ฐานข้อมูล: รหัสข้อผิดพลาด `NOT_STUDENT`, `INVALID_SQL_TEXT`, `PROBLEM_CLOSED`, `ALREADY_SUBMITTED`, `NOT_INSTRUCTOR` (42501), `PROBLEM_NOT_FOUND`, `SCORE_OUT_OF_RANGE`, `MANUAL_RESULT_PROTECTED`, `MAX_SCORE_BELOW_GIVEN`, `CONFIRM_TITLE_MISMATCH` (P0001); verdict คำนวณใน `tg_results_validate`; `submitted_at` = `clock_timestamp()` หลังได้ล็อก
+
+**ข้อควรระวัง (เรียนรู้ระหว่างทำ)**
+- Next.js 16: อ่าน `node_modules/next/dist/docs/` ก่อนเขียนโค้ด (AGENTS.md); middleware = `src/proxy.ts`; Cache Components → หน้าที่อ่าน session อยู่ใน `<Suspense>` และ `createClient()` เรียก `await connection()`; `notFound()` ใน Suspense ตอบ 200; หน้าก่อนหน้าค้างใน DOM แบบซ่อน (`<Activity>`) → Playwright ใช้ `.filter({ visible: true })` / `exact: true`
+- Supabase CLI: เรียกผ่าน `npx supabase`; `migration new` ต้องต่อท้าย `< /dev/null` (ไม่งั้นค้างรอ stdin); แก้ค่า auth ใน `config.toml` ต้อง `db:stop` + `db:start`; ตรวจ project จริงแบบอ่านอย่างเดียวด้วย `config diff` และ `db query --remote --read-only` — **ห้าม `config push`** (จะส่ง site_url localhost ขึ้นไป)
+- การส่งขึ้นระบบจริง (`db push --remote`, `git push`) ต้องได้คำว่า “ทำเลย” จากผู้ใช้ในข้อความล่าสุดเสมอ
+- เทสต์: pgTAP ใช้ `\ir _helpers.psql` + `tests.reset_data()`; e2e สร้างข้อมูลของตัวเองเสมอ (ห้ามหยิบโจทย์ที่เปิดอยู่ข้อไหนก็ได้); polling ใช้ dev server ตัวที่สอง port 3001 (`NEXT_DIST_DIR=.next-polling`); ทดสอบ Vercel ด้วย `PLAYWRIGHT_BASE_URL=https://sqlquickquiz.vercel.app npx playwright test`
+- ค้าง: `npm audit` moderate 8 รายการใน `@typescript-eslint` (devDependency); ควรหมุน Google Client Secret (เคยถูกพิมพ์ในแชต)
 
 (อัปเดตส่วนนี้ทุกครั้งที่จบระยะ)
 
