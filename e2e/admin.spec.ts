@@ -2,15 +2,21 @@ import { test, expect, type Page } from "@playwright/test";
 import {
   INSTRUCTOR,
   adminClient,
+  createProblem,
   createStudent,
+  deleteProblem,
   deleteStudentById,
   randomStudentId,
   sessionCookies,
+  submitAs,
   tryStudentLogin,
 } from "./support/supabase";
 
 const cleanup: string[] = [];
+const problems: number[] = [];
 test.afterEach(async () => {
+  // ลบโจทย์ก่อน (ลบคำตอบตามไปด้วย) แล้วจึงลบนิสิต
+  while (problems.length) await deleteProblem(problems.pop()!);
   while (cleanup.length) await deleteStudentById(cleanup.pop()!);
 });
 
@@ -162,16 +168,10 @@ test("ลบได้เฉพาะนิสิตที่ยังไม่�
   const submitted = await createStudent();
   cleanup.push(fresh.studentId, submitted.studentId);
 
-  // ให้ submitted ส่งคำตอบ 1 ข้อ (ข้อ 1 ใน seed เปิดอยู่)
-  const client = adminClient();
-  const { data: problem } = await client.from("problem_status").select("problem_id").eq("is_open", true).limit(1).single();
-  const { createClient } = await import("@supabase/supabase-js");
-  const studentClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
-    auth: { persistSession: false },
-  });
-  await studentClient.auth.signInWithPassword({ email: `${submitted.studentId}@quiz.local`, password: submitted.password });
-  const { error } = await studentClient.rpc("submit_answer", { p_problem_id: problem!.problem_id, p_sql_text: "SELECT 1;" });
-  expect(error).toBeNull();
+  // ให้ submitted ส่งคำตอบ 1 ข้อ — ใช้โจทย์ของเทสต์นี้เอง (ไม่ไปกระทบโจทย์ของเทสต์อื่นที่รันพร้อมกัน)
+  const problemId = await createProblem();
+  problems.push(problemId);
+  await submitAs(submitted, problemId);
 
   await asInstructor(page, baseURL!);
   await page.goto("/admin/students");

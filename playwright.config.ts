@@ -20,6 +20,8 @@ const dbSpecs = remote
       "**/current-problems.spec.ts",
       "**/grading.spec.ts",
       "**/student-history.spec.ts",
+      "**/ranking.spec.ts",
+      "**/reports.spec.ts",
     ]
   : [];
 const POLLING_SPEC = "**/counter-polling.spec.ts";
@@ -45,7 +47,14 @@ export default defineConfig({
     {
       name: "mobile",
       use: { ...devices["Pixel 7"] },
-      testIgnore: [...dbSpecs, POLLING_SPEC, "**/admin.spec.ts", "**/admin-problems.spec.ts", "**/grading.spec.ts"],
+      testIgnore: [
+        ...dbSpecs,
+        POLLING_SPEC,
+        "**/admin.spec.ts",
+        "**/admin-problems.spec.ts",
+        "**/grading.spec.ts",
+        "**/reports.spec.ts",
+      ],
     },
     // NEXT_PUBLIC_COUNT_MODE=polling (dev server ตัวที่สอง)
     ...(remote

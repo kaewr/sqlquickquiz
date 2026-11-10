@@ -106,7 +106,9 @@ export function ReleasePanel({
               {copied ? "คัดลอกแล้ว ✓" : "คัดลอกลิงก์"}
             </button>
           </div>
-          <p className="text-xs text-foreground/60">หน้าอันดับสาธารณะจะเปิดใช้ได้ในการอัปเดตถัดไป</p>
+          <a href={released.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+            เปิดหน้าอันดับ ↗
+          </a>
         </div>
       )}
 

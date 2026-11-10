@@ -16,6 +16,9 @@ export function AdminShell({ email, children }: { email: string; children: React
             <Link href="/admin/students" className="text-sm text-foreground/70 hover:text-foreground">
               นิสิต
             </Link>
+            <Link href="/admin/reports" className="text-sm text-foreground/70 hover:text-foreground">
+              รายงาน
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <span className="text-sm text-foreground/60" data-testid="admin-email">

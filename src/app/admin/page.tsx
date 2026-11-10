@@ -24,6 +24,10 @@ async function AdminHome({ searchParams }: { searchParams: PageProps<"/admin">["
           <p className="font-medium">จัดการนิสิต</p>
           <p className="mt-1 text-sm text-foreground/60">นำเข้ารายชื่อ CSV, รีเซ็ตรหัสผ่าน, ปิด/เปิดบัญชี</p>
         </Link>
+        <Link href="/admin/reports" className="card hover:bg-muted">
+          <p className="font-medium">รายงานและสำรองข้อมูล</p>
+          <p className="mt-1 text-sm text-foreground/60">คะแนนรายคน × โจทย์, ส่งออก CSV, สำรองข้อมูลทุกตาราง</p>
+        </Link>
       </div>
     </AdminGate>
   );

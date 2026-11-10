@@ -1,8 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { fetchPublicResults } from "@/lib/public-results";
 
-/** ต่ออายุ session ของ Supabase ทุก request ก่อนหน้าเว็บอ่าน cookie */
 export async function proxy(request: NextRequest) {
+  // หน้าอันดับสาธารณะ: ตรวจ token ก่อน render เพื่อตอบ 404 จริง
+  // (notFound() ภายใน <Suspense> ตอบ 200 เพราะเริ่มส่งหน้าไปแล้ว) — ไม่ต้องใช้ session
+  const ranking = request.nextUrl.pathname.match(/^\/r\/([^/]+)\/?$/);
+  if (ranking) {
+    const rows = await fetchPublicResults(decodeURIComponent(ranking[1]));
+    if (rows.length === 0) {
+      return NextResponse.rewrite(new URL("/r-missing", request.url), { status: 404 });
+    }
+    return NextResponse.next();
+  }
+
+  // ต่ออายุ session ของ Supabase ก่อนหน้าเว็บอ่าน cookie
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
