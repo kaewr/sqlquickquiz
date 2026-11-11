@@ -1,10 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { studentLogin, type FormState } from "@/app/actions/auth";
+
+/** รอนานกว่านี้ = น่าจะโดนเพดานล็อกอินและ server กำลังลองใหม่ให้ */
+const QUEUE_HINT_MS = 2000;
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState<FormState, FormData>(studentLogin, {});
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = setTimeout(() => setSlow(true), QUEUE_HINT_MS);
+    return () => {
+      clearTimeout(timer);
+      setSlow(false);
+    };
+  }, [pending]);
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
@@ -39,6 +51,11 @@ export function LoginForm() {
           <button type="submit" disabled={pending} className="btn btn-primary">
             {pending ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
           </button>
+          {pending && slow && (
+            <p role="status" data-testid="login-queue" className="text-center text-sm text-foreground/60">
+              มีผู้เข้าระบบพร้อมกันจำนวนมาก กำลังรอคิว ไม่ต้องกดซ้ำ…
+            </p>
+          )}
         </form>
 
         <p className="mt-4 text-center text-sm text-foreground/60">

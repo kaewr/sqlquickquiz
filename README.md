@@ -126,8 +126,8 @@ npx supabase link --project-ref anyvflatoeedytlrntmp # จะถามรหั�
 | ที่ | ค่า |
 | --- | --- |
 | Authentication > Sign In / Providers | ปิด *Allow new users to sign up*, เปิด Google (Client ID/Secret) |
-| Authentication > Sign In / Providers > Email | Minimum password length = **8** |
-| Authentication > Rate Limits | sign-ups and sign-ins ≥ **1000** / 5 นาที, token refreshes ≥ **1800** / 5 นาที (ทั้งห้องใช้ IP เดียวกัน) |
+| Authentication > Sign In / Providers > Email | Minimum password length = **8**, เปิด **Secure password change** |
+| Authentication > Rate Limits | sign-ups and sign-ins ≥ **1000** / 5 นาที, token refreshes ≥ **6000** / 5 นาที (ล็อกอินด้วยรหัสผ่านนับในหมวดนี้) (ทั้งห้องใช้ IP เดียวกัน) |
 | Authentication > URL Configuration | Site URL = `https://sqlquickquiz.vercel.app`, Redirect URLs = `https://sqlquickquiz.vercel.app/**`, `http://localhost:3000/**` |
 | Authentication > Users > Add user | สร้าง `pornthep.ro@up.ac.th` (Auto Confirm) ครั้งเดียว — Google จะผูกเข้ากับบัญชีนี้ตอนล็อกอินครั้งแรก |
 

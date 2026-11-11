@@ -7,7 +7,13 @@ export async function proxy(request: NextRequest) {
   // (notFound() ภายใน <Suspense> ตอบ 200 เพราะเริ่มส่งหน้าไปแล้ว) — ไม่ต้องใช้ session
   const ranking = request.nextUrl.pathname.match(/^\/r\/([^/]+)\/?$/);
   if (ranking) {
-    const rows = await fetchPublicResults(decodeURIComponent(ranking[1]));
+    let token: string | null = null;
+    try {
+      token = decodeURIComponent(ranking[1]);
+    } catch {
+      // % ที่ไม่สมบูรณ์ (URIError) → ถือว่าไม่พบ
+    }
+    const rows = token === null ? [] : await fetchPublicResults(token);
     if (rows.length === 0) {
       return NextResponse.rewrite(new URL("/r-missing", request.url), { status: 404 });
     }

@@ -1,8 +1,13 @@
-/** สร้าง CSV สำหรับ Excel: UTF-8 BOM + CRLF, ครอบค่าที่มี , " หรือขึ้นบรรทัดด้วย "…" */
+/**
+ * สร้าง CSV สำหรับ Excel: UTF-8 BOM + CRLF, ครอบค่าที่มี , " หรือขึ้นบรรทัดด้วย "…"
+ * ข้อความที่ขึ้นต้นด้วย = + - @ tab หรือ CR ใส่ ' นำหน้า กัน Excel ตีความเป็นสูตร
+ * (เช่น SQL ที่นิสิตส่งมา) — ตัวเลขจริง (number) ไม่ถูกแตะ
+ */
 export function toCsv(rows: (string | number | null | undefined)[][]): string {
   const cell = (v: string | number | null | undefined) => {
     if (v === null || v === undefined) return "";
-    const s = String(v);
+    let s = String(v);
+    if (typeof v === "string" && /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
     return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return "﻿" + rows.map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";

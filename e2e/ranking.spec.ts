@@ -46,7 +46,7 @@ test("หน้าอันดับสาธารณะ: ไม่ต้อง
     for (const s of students) expect(html).not.toContain(s.studentId);
 
     // token ผิด / รูปแบบผิด → 404
-    for (const bad of ["no-such-token-abcdefgh1234", "x", `${token}x`]) {
+    for (const bad of ["no-such-token-abcdefgh1234", "x", `${token}x`, "%E0%A4%A"]) {
       const r = await request.get(`/r/${bad}`);
       expect(r.status(), bad).toBe(404);
     }

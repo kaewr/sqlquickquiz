@@ -10,7 +10,16 @@
 
 กติกาเดิมยังใช้: เสนอแผนก่อนเขียนโค้ด · รายงานประเด็นความปลอดภัย**ก่อนแก้** (PLAN ระยะ 7 สั่งไว้) · ส่งขึ้นระบบจริงต้องได้ “ทำเลย”
 
-## สถานะ ณ ตอนส่งต่อ
+## ความคืบหน้าระยะ 7 (อัปเดต 2026-11-11)
+
+- **เสร็จ:** load test (`loadtest/`: accounts, run, login-burst, web) ผลใน `docs/LOADTEST.md` · ทบทวนความปลอดภัย `docs/SECURITY-REVIEW.md` (แก้ M1, L1 บางส่วน, L2, L3; M2 ยอมรับ) · ล็อกอินลองใหม่เอง · keep-alive workflow · `vercel.json` sin1 · เทสต์หน้าค้างเกินอายุ JWT ผ่าน
+- **production ตั้งแล้ว (ตรวจแล้ว):** `NEXT_PUBLIC_COUNT_MODE=polling`, Vercel region sin1, token refresh 6000
+- **ค้างบน production:** บัญชีทดสอบ `99000001`–`99000110` (ตอน LT) — เก็บไว้สำหรับ `loadtest/web.mjs` แล้วลบด้วย `node loadtest/accounts.mjs delete --target prod --yes-production`
+- **รอ “ทำเลย”:** git push → (deploy) → `node loadtest/web.mjs --students 40 --target prod --yes-production` → ลบบัญชีทดสอบ
+- **รอผู้ใช้:** หลัง deploy เปิด Secure password change · ตั้ง GitHub secret `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` แล้วกด Run workflow ครั้งแรก · กรอกตัวเลข Dashboard ใน LOADTEST.md
+- **ยังไม่ทำ:** คู่มือนิสิต/อาจารย์ (เปิด/ปิดทีละข้อ, ล็อกอินก่อน 2–3 นาที, ดาวน์โหลดสำรองหลังคาบ, ออกจากระบบบนเครื่องส่วนกลาง), ซ้อมเองบน production, ทดลองใช้จริงตอน 1 (`docs/PILOT.md`), reset ข้อมูลก่อนเปิดใช้, tag `phase-7`
+
+## สถานะ ณ ตอนส่งต่อ (จบระยะ 6)
 
 - ระยะ 0–6 เสร็จ ขึ้น production แล้ว (tag `phase-6` = `2a94b06`), working tree สะอาด, ไม่มีงานค้างในบทสนทนา
 - Production มีนิสิตจริง 110 คน (ตอน 1) และโจทย์ทดลองของอาจารย์ 2 ข้อ — **ยังไม่เคยมีข้อที่ประกาศผล** จึงยังไม่ได้เห็นหน้า `/r/[token]` ที่ token ถูกบน production (เทสต์บนเครื่องครอบคลุมแล้ว)
@@ -18,24 +27,24 @@
 
 ## ต้องให้ผู้ใช้เตรียม (ถามตอนเสนอแผน)
 
-1. **Supabase project ทดสอบแยก** (แผนฟรี, Singapore) เช่น `sqlquickquiz-loadtest` — load test **ห้าม**ยิงใส่ `anyvflatoeedytlrntmp`
-   - ต้องได้: project ref, publishable key, secret key (ให้ผู้ใช้ใส่ในไฟล์เอง เช่น `.env.loadtest` ที่ gitignore — ตรวจว่า `.env*` ใน `.gitignore` ครอบคลุมแล้ว)
-   - ต้อง push migration ทั้ง 10 ไฟล์ขึ้น project ทดสอบ (CLI link อยู่กับ project จริง → ใช้ `--db-url` หรือ `--project-ref` ระวังอย่าสลับ link ทิ้ง)
-   - ตั้งค่า Auth แบบเดียวกับ production (ดู README “ค่าตั้งของ Supabase project จริง”) โดยเฉพาะ rate limit — ไม่งั้น 100 คนจาก IP เดียวจะโดนเพดาน 30
-2. ตัดสินใจว่าจะรันหน้าเว็บสำหรับ load test ที่ไหน: Vercel preview ที่ชี้ project ทดสอบ หรือ `next start` บนเครื่อง
+1. ~~Supabase project ทดสอบแยก~~ — **ตัดสินใจ 2026-11-10: load test บน project จริง `anyvflatoeedytlrntmp`** เพราะยังไม่เปิดใช้จริงและผู้ใช้จะ reset ข้อมูลก่อนเปิดใช้
+   - ผู้ใช้ใส่ `LOADTEST_SUPABASE_URL`, `LOADTEST_PUBLISHABLE_KEY`, `LOADTEST_SECRET_KEY` ใน `.env.loadtest` เอง (`.env*` อยู่ใน `.gitignore` แล้ว)
+   - บัญชีทดสอบ `99xxxxxx` ตอน `LT` (ตรวจแล้ว: production ไม่มีรหัสขึ้นต้น 99) · สคริปต์แตะเฉพาะข้อมูลที่ตัวเองสร้าง + คำสั่งเก็บกวาด · ต้องได้ “ทำเลย” ทุกรอบที่รันกับ production
+   - อาจารย์จำลองฟัง `problem-submissions:<id>` ด้วย service key (ไม่สร้าง identity Google ปลอมบน production; RLS ช่องนี้ครอบคลุมด้วย pgTAP แล้ว)
+2. ไม่ต้องมีหน้าเว็บสำหรับ load test (สคริปต์ยิง Supabase ตรง)
 3. หมุน Google OAuth Client Secret (ค่าเดิมเคยถูกพิมพ์ในแชต) — อัปเดตทั้ง Supabase Dashboard และ `supabase/.env`
 
 ## ทิศทางที่แนะนำ
 
 **สคริปต์บัญชีทดสอบ + load test**
-- สร้าง 100 บัญชีด้วย admin API ของ project ทดสอบ (รูปแบบเดียวกับ `src/app/api/admin/students/import/route.ts`, รหัส 8 หลักที่ไม่ชนกับของจริง เช่นขึ้นต้น `99`)
+- สร้าง 100 บัญชีด้วย admin API (รูปแบบเดียวกับ `src/app/api/admin/students/import/route.ts`, รหัส 8 หลักที่ไม่ชนกับของจริง เช่นขึ้นต้น `99`)
 - ตัวจำลองนิสิต: Node + `@supabase/supabase-js` (ไม่ต้องมีเบราว์เซอร์) — แต่ละคน sign in, subscribe `problem-state` + `problem-counts` แบบ private, รอ broadcast เปิดข้อ, ส่ง `submit_answer` สุ่มภายใน 60 วินาที
 - จำลองหน้าอาจารย์ 1 ตัว subscribe `problem-submissions:<id>` นับว่าได้ครบ 100
 - ตรวจ: ส่งสำเร็จครบ 100, `submission_count` = 100, `submit_order` 1..100 ไม่ซ้ำ, ทุก client ได้ broadcast ปิดข้อ
 - รันทั้ง `NEXT_PUBLIC_COUNT_MODE=realtime` และ `polling` เทียบจำนวนข้อความ (polling = ไม่ subscribe `problem-counts`)
 - โครงเทสต์ concurrency ที่มีอยู่: `supabase/tests/database/070_concurrency.test.sql` (dblink 25 connections)
 
-**วัดโควตา** (Supabase Dashboard → Usage / Realtime reports ของ project ทดสอบ): จำนวนข้อความ realtime, peak connections, DB CPU/egress — เทียบเพดานแผนฟรี แล้วสรุปว่าควรใช้โหมดตัวนับแบบไหน (ประมาณการ: realtime mode ≈ n² ข้อความต่อข้อสำหรับตัวนับ)
+**วัดโควตา** (Supabase Dashboard → Usage / Realtime reports ของ project จริง): จำนวนข้อความ realtime, peak connections, DB CPU/egress — เทียบเพดานแผนฟรี แล้วสรุปว่าควรใช้โหมดตัวนับแบบไหน (ประมาณการ: realtime mode ≈ n² ข้อความต่อข้อสำหรับตัวนับ)
 
 **ทบทวนความปลอดภัย** (รายงานก่อนแก้)
 - RLS ทุกตาราง + policy บน `realtime.messages` (3 policy: `problem_broadcast_receive`, `problem_submissions_receive_instructor`)

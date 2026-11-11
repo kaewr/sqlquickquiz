@@ -63,7 +63,7 @@ test.describe("รายงานรายคนและสำรองข้�
     await submitAs(s[0], p1, "SELECT report_secret_a;");
     await submitAs(s[0], p2);
     await submitAs(s[1], p1);
-    await submitAs(s[1], p2);
+    await submitAs(s[1], p2, `=HYPERLINK("http://evil.example/","x")`);
     await submitAs(s[2], pOld);
     const { data: subs } = await admin.from("submissions").select("id, problem_id, student_user_id").in("problem_id", [p1, p2, pOld]);
     const sub = (i: number, p: number) => subs!.find((x) => x.problem_id === p && x.student_user_id === s[i].userId)!.id;
@@ -167,6 +167,9 @@ test.describe("รายงานรายคนและสำรองข้�
     }
     const submissions = strFromU8(files["submissions.csv"]);
     expect(submissions).toContain("SELECT report_secret_a;");
+    // คำตอบที่ขึ้นต้นด้วย = ต้องมี ' นำหน้า (กัน Excel ตีความเป็นสูตร)
+    expect(submissions).toContain(`"'=HYPERLINK(""http://evil.example/"",""x"")"`);
+    expect(submissions).not.toMatch(/(^|,)"?=HYPERLINK/m);
     // strFromU8 ตัด BOM ออกเอง (ตรวจ BOM ที่ระดับไบต์ข้างบนแล้ว)
     expect(submissions.split("\r\n")[0]).toBe("id,problem_id,student_user_id,sql_text,submitted_at,submit_order");
     expect(strFromU8(files["profiles.csv"])).toContain(s[0].studentId);

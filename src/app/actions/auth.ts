@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createEphemeralClient } from "@/lib/supabase/admin";
 import { isValidStudentId, studentEmail, MIN_PASSWORD_LENGTH } from "@/lib/student-id";
 import { thaiError } from "@/lib/errors";
+import { withRateLimitRetry } from "@/lib/rate-limit-retry";
 
 export type FormState = { error?: string; success?: string };
 
@@ -18,10 +19,13 @@ export async function studentLogin(_prev: FormState, formData: FormData): Promis
   if (!password) return { error: thaiError("invalid_credentials") };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: studentEmail(studentId),
-    password,
-  });
+  // ทั้งห้องกดพร้อมกัน → บางคนโดนเพดานชั่วครู่ ลองใหม่เองโดยนิสิตไม่ต้องกดซ้ำ
+  const { error } = await withRateLimitRetry(() =>
+    supabase.auth.signInWithPassword({
+      email: studentEmail(studentId),
+      password,
+    }),
+  );
   if (error) return { error: thaiError(error.code ?? "invalid_credentials") };
 
   redirect("/");
@@ -65,18 +69,21 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   if (!profile) return { error: thaiError("NOT_STUDENT_ACCOUNT") };
 
   const verifier = createEphemeralClient();
-  const { error: verifyError } = await verifier.auth.signInWithPassword({
-    email: studentEmail(profile.student_id),
-    password: oldPassword,
-  });
+  const { error: verifyError } = await withRateLimitRetry(() =>
+    verifier.auth.signInWithPassword({
+      email: studentEmail(profile.student_id),
+      password: oldPassword,
+    }),
+  );
   if (verifyError) {
     return {
       error: verifyError.code === "invalid_credentials" ? thaiError("WRONG_OLD_PASSWORD") : thaiError(verifyError.code),
     };
   }
+  // เปลี่ยนด้วย session ที่เพิ่งยืนยันรหัสเดิม (ไม่ใช่ session เก่าของเบราว์เซอร์)
+  // เพราะเปิด secure_password_change: session เก่าเกิน 24 ชม. ต้องยืนยันทางอีเมล ซึ่งบัญชีนิสิตไม่มีจริง
+  const { error: updateError } = await verifier.auth.updateUser({ password: newPassword });
   await verifier.auth.signOut({ scope: "local" });
-
-  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
   if (updateError) return { error: thaiError(updateError.code) };
 
   const { error: markError } = await supabase.rpc("mark_password_changed");
