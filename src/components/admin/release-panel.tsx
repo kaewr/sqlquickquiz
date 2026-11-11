@@ -5,17 +5,24 @@ import { releaseResults } from "@/app/actions/grading";
 
 const dateTime = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" });
 
-/** ประกาศผลปุ่มเดียว: แจ้งเตือนถ้ายังให้คะแนนไม่ครบ → ได้ลิงก์อันดับพร้อมปุ่มคัดลอก */
+/**
+ * ประกาศผลปุ่มเดียว → ได้ลิงก์อันดับพร้อมปุ่มคัดลอก
+ * กดได้เมื่อ ปิดรับคำตอบแล้ว + มีผู้ส่ง + ให้คะแนนครบ (ฐานข้อมูลบังคับซ้ำใน release_results)
+ */
 export function ReleasePanel({
   problemId,
   graded,
   total,
+  isOpen,
   initial,
+  onReleased,
 }: {
   problemId: number;
   graded: number;
   total: number;
+  isOpen: boolean;
   initial: { url: string; releasedAt: string } | null;
+  onReleased?: () => void;
 }) {
   const [released, setReleased] = useState(initial);
   const [confirming, setConfirming] = useState(false);
@@ -23,6 +30,11 @@ export function ReleasePanel({
   const [copied, setCopied] = useState(false);
   const [pending, start] = useTransition();
   const ungraded = total - graded;
+  const blockers = [
+    isOpen && "ต้องปิดรับคำตอบก่อน",
+    total === 0 && "ยังไม่มีผู้ส่งคำตอบ",
+    ungraded > 0 && `ยังไม่ได้ให้คะแนน ${ungraded} คน`,
+  ].filter((b): b is string => Boolean(b));
 
   function release() {
     setConfirming(false);
@@ -32,6 +44,7 @@ export function ReleasePanel({
       else {
         setError("");
         setReleased({ url: res.url, releasedAt: res.releasedAt });
+        onReleased?.();
       }
     });
   }
@@ -62,18 +75,24 @@ export function ReleasePanel({
           <button
             type="button"
             className="btn btn-primary"
-            disabled={pending || total === 0}
-            onClick={() => (ungraded > 0 ? setConfirming(true) : release())}
+            disabled={pending || blockers.length > 0}
+            onClick={() => setConfirming(true)}
           >
             {pending ? "กำลังประกาศ…" : "ประกาศผล"}
           </button>
         )}
       </div>
 
-      {confirming && (
+      {!released && blockers.length > 0 && (
+        <p className="text-sm text-foreground/70" data-testid="release-blockers">
+          ประกาศผลได้เมื่อ: {blockers.join(" · ")}
+        </p>
+      )}
+
+      {confirming && blockers.length === 0 && (
         <div role="alertdialog" aria-labelledby="release-warning" className="alert border border-warning-border bg-warning-bg text-warning-fg">
           <p id="release-warning">
-            ยังไม่ได้ให้คะแนน <strong>{ungraded}</strong> คน — คนที่ยังไม่ได้ให้คะแนนจะเห็น “รอตรวจ” จนกว่าจะให้คะแนน
+            ประกาศผลแล้ว<strong>ยกเลิกไม่ได้</strong> และ<strong>เปิดรับคำตอบข้อนี้อีกไม่ได้</strong> (แก้คะแนนต่อได้)
             ประกาศผลเลยหรือไม่?
           </p>
           <div className="mt-2 flex gap-2">

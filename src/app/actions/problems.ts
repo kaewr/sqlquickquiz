@@ -86,6 +86,7 @@ export async function setProblemOpen(problemId: number, open: boolean): Promise<
     .update({ is_open: open })
     .eq("problem_id", problemId)
     .select("problem_id");
+  if (error?.message === "PROBLEM_RELEASED") return { error: thaiError("PROBLEM_RELEASED") };
   if (error || !data?.length) {
     console.error("[setProblemOpen]", error);
     return { error: thaiError(error ? "DB_ERROR" : "PROBLEM_NOT_FOUND") };

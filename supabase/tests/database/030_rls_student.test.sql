@@ -31,6 +31,7 @@ select id from public.submissions where student_user_id = (select s2 from ids);
 grant select on s2_subs to authenticated;
 -- ประกาศผลข้อ p_rel อย่างเดียว แล้วปิดข้อ p_unrel
 select tests.login_as(t1) from ids;
+update public.problem_status set is_open = false where problem_id = (select p_rel from ids);
 select public.release_results((select p_rel from ids));
 update public.problem_status set is_open = false where problem_id = (select p_unrel from ids);
 reset role;

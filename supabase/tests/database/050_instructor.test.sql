@@ -151,6 +151,8 @@ select results_eq(
 );
 
 -- ---------- release_results ----------
+update public.problem_status set is_open = false
+ where problem_id = (select id from public.problems where title = 'โจทย์อาจารย์');
 select results_eq(
   $$ select results_released_at = now(), length(public_token) >= 16
      from public.release_results((select id from public.problems where title = 'โจทย์อาจารย์')) $$,

@@ -7,6 +7,8 @@ export type PublicResultRow = {
   problem_date: string | null;
   released_at: string;
   submit_order: number;
+  /** อันดับตามคะแนน (มาก → น้อย, เท่ากันใครส่งก่อนได้ดีกว่า) */
+  score_rank: number;
   student_id_masked: string;
   score: number | null;
   submitted_at: string;

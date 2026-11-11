@@ -29,6 +29,11 @@ const MESSAGES: Record<string, string> = {
   SCORE_OUT_OF_RANGE: "คะแนนเกินคะแนนเต็มของข้อนี้",
   CONFIRM_TITLE_MISMATCH: "ชื่อโจทย์ที่พิมพ์ยืนยันไม่ตรง",
   MAX_SCORE_BELOW_GIVEN: "คะแนนเต็มต่ำกว่าคะแนนที่ให้นิสิตไปแล้ว ให้แก้คะแนนนิสิตก่อน",
+  // ประกาศผล
+  PROBLEM_STILL_OPEN: "ต้องปิดรับคำตอบก่อนจึงประกาศผลได้",
+  UNGRADED_SUBMISSIONS: "ยังให้คะแนนไม่ครบทุกคน จึงประกาศผลไม่ได้",
+  NO_SUBMISSIONS: "ยังไม่มีผู้ส่งคำตอบ จึงประกาศผลไม่ได้",
+  PROBLEM_RELEASED: "ข้อนี้ประกาศผลแล้ว เปิดรับคำตอบอีกไม่ได้ (ให้คัดลอกโจทย์เป็นข้อใหม่)",
   // ปัญหาการตั้งค่าเซิร์ฟเวอร์ (ดู log ใน Vercel)
   SERVER_MISCONFIGURED: "ระบบยังตั้งค่าไม่ครบ: ไม่พบ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์",
   SERVICE_KEY_REJECTED: "Supabase ปฏิเสธ SUPABASE_SERVICE_ROLE_KEY บนเซิร์ฟเวอร์ (ค่าไม่ถูกต้องหรือเป็นของ project อื่น)",

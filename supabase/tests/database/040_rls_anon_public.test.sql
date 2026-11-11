@@ -24,15 +24,16 @@ reset role;
 select tests.login_as(s3) from ids;
 select public.submit_answer((select p_rel from ids), 'SELECT secret_sql_s3 FROM t;');
 reset role;
--- ให้คะแนน s1, s2 (s3 ยังไม่ได้ให้คะแนน)
+-- ให้คะแนนครบทุกคน: s1 = 5, s2 = 10, s3 = 10 (s2/s3 คะแนนเท่ากัน → ใครส่งก่อนได้อันดับดีกว่า)
 insert into public.results (submission_id, score, verdict)
-select s.id, case when s.student_user_id = (select s1 from ids) then 10 else 5 end,
+select s.id, case when s.student_user_id = (select s1 from ids) then 5 else 10 end,
        case when s.student_user_id = (select s1 from ids) then 'correct'::public.verdict else 'partial' end
-from public.submissions s where s.student_user_id in ((select s1 from ids), (select s2 from ids));
+from public.submissions s where s.problem_id = (select p_rel from ids);
 
 create temp table tok (rel text, unrel text);
 grant select, insert on tok to anon, authenticated;
 select tests.login_as(t1) from ids;
+update public.problem_status set is_open = false where problem_id = (select p_rel from ids);
 insert into tok (rel) select public_token from public.release_results((select p_rel from ids));
 reset role;
 
@@ -53,12 +54,12 @@ select throws_ok($$ select public.release_results(1) $$,       '42501', null, 'a
 
 -- ================= get_public_results =================
 select results_eq(
-  $$ select submit_order, student_id_masked, score
+  $$ select submit_order, score_rank, student_id_masked, score
      from public.get_public_results((select rel from tok)) order by submit_order $$,
-  $$ values (1, '65xxx678', 10.00::numeric(6,2)),
-            (2, '65xxx321', 5.00::numeric(6,2)),
-            (3, '65xxx303', null::numeric(6,2)) $$,
-  'anon ได้อันดับตามเวลาส่ง รหัสปิดบางส่วน และคะแนน (ยังไม่ให้คะแนน = ว่าง)'
+  $$ values (1, 3, '65xxx678', 5.00::numeric(6,2)),
+            (2, 1, '65xxx321', 10.00::numeric(6,2)),
+            (3, 2, '65xxx303', 10.00::numeric(6,2)) $$,
+  'anon ได้ลำดับส่ง + อันดับคะแนน (เท่ากันใครส่งก่อนได้ดีกว่า) รหัสปิดบางส่วน และคะแนน'
 );
 select results_eq(
   $$ select distinct problem_title, max_score from public.get_public_results((select rel from tok)) $$,
@@ -73,7 +74,7 @@ select is_empty(
      where r.routine_schema = 'public' and r.routine_name = 'get_public_results'
        and p.parameter_mode = 'OUT'
        and p.parameter_name not in ('problem_title', 'max_score', 'problem_date', 'released_at',
-                                    'submit_order', 'student_id_masked', 'score', 'submitted_at') $$,
+                                    'submit_order', 'score_rank', 'student_id_masked', 'score', 'submitted_at') $$,
   'get_public_results คืนเฉพาะคอลัมน์ที่อนุญาต'
 );
 select is_empty(

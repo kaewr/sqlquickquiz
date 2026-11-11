@@ -30,6 +30,7 @@ export function SubmissionsMonitor({
   const supabase = useMemo(() => createClient(), []);
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [isOpen, setIsOpen] = useState(initialOpen);
+  const [released, setReleased] = useState(release !== null);
   const [section, setSection] = useState("");
   const [pageSize, setPageSize] = useState<number>(20); // 0 = ทั้งหมด
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "order", dir: "asc" });
@@ -139,10 +140,17 @@ export function SubmissionsMonitor({
             {connection === "connected" ? "อัปเดตอัตโนมัติ" : "กำลังเชื่อมต่อ…"}
           </span>
         </div>
-        <OpenToggle problemId={problemId} isOpen={isOpen} size="md" onChanged={setIsOpen} />
+        <OpenToggle problemId={problemId} isOpen={isOpen} released={released} size="md" onChanged={setIsOpen} />
       </div>
 
-      <ReleasePanel problemId={problemId} graded={graded} total={submissions.length} initial={release} />
+      <ReleasePanel
+        problemId={problemId}
+        graded={graded}
+        total={submissions.length}
+        isOpen={isOpen}
+        initial={release}
+        onReleased={() => setReleased(true)}
+      />
 
       <label className="field max-w-xs">
         <span>ตอนเรียน</span>

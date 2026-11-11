@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { fetchPublicResults } from "@/lib/public-results";
 import { formatScore } from "@/lib/grading";
+import { RankingTable } from "@/components/ranking-table";
 
 export const metadata: Metadata = {
   title: "อันดับ — SQL Quick Quiz",
@@ -23,7 +24,6 @@ export default function RankingPage({ params }: PageProps<"/r/[token]">) {
 
 const dateFmt = new Intl.DateTimeFormat("th-TH", { dateStyle: "long", timeZone: "UTC" });
 const dateTimeFmt = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" });
-const timeFmt = new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 async function Ranking({ params }: { params: PageProps<"/r/[token]">["params"] }) {
   await connection();
@@ -44,31 +44,8 @@ async function Ranking({ params }: { params: PageProps<"/r/[token]">["params"] }
         <p className="text-xs text-foreground/50">ประกาศผลเมื่อ {dateTimeFmt.format(new Date(head.released_at))} น.</p>
       </header>
 
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-sm" data-testid="ranking">
-          <thead className="bg-muted text-left">
-            <tr>
-              <th className="px-3 py-2 text-right">อันดับ</th>
-              <th className="px-3 py-2">รหัสนิสิต</th>
-              <th className="px-3 py-2">เวลาส่ง</th>
-              <th className="px-3 py-2 text-right">คะแนน</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.submit_order} className="border-t border-border" data-testid="ranking-row">
-                <td className="px-3 py-2 text-right tabular-nums">{r.submit_order}</td>
-                <td className="px-3 py-2 font-mono">{r.student_id_masked}</td>
-                <td className="px-3 py-2 tabular-nums">{timeFmt.format(new Date(r.submitted_at))}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {r.score === null ? <span className="text-foreground/50">รอตรวจ</span> : formatScore(r.score)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="text-xs text-foreground/50">อันดับเรียงตามเวลาส่ง · รหัสนิสิตแสดงบางส่วนเพื่อความเป็นส่วนตัว</p>
+      <RankingTable rows={rows} />
+      <p className="text-xs text-foreground/50">อันดับเรียงตามคะแนน คะแนนเท่ากันผู้ที่ส่งก่อนได้อันดับดีกว่า · รหัสนิสิตแสดงบางส่วนเพื่อความเป็นส่วนตัว</p>
     </div>
   );
 }

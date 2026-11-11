@@ -145,7 +145,7 @@ function ProblemTable({
                 {p.submission_count}
               </td>
               <td className="px-3 py-2 text-right">
-                <OpenToggle problemId={p.id} isOpen={p.is_open} onChanged={onChanged} />
+                <OpenToggle problemId={p.id} isOpen={p.is_open} released={p.released} onChanged={onChanged} />
               </td>
             </tr>
           ))}

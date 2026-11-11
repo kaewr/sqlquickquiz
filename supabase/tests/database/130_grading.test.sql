@@ -111,6 +111,7 @@ select is_empty($$ select 1 from public.results $$, 'ก่อนประกา
 reset role;
 
 select tests.login_as(t1) from ids;
+update public.problem_status set is_open = false where problem_id = (select p1 from ids);
 select public.release_results((select p1 from ids));
 reset role;
 

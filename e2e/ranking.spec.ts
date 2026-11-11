@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { adminClient, createProblem, createStudent, deleteProblem, deleteStudentById, submitAs } from "./support/supabase";
 
-test("หน้าอันดับสาธารณะ: ไม่ต้องล็อกอิน, เรียงตามเวลาส่ง, รหัสปิดบางส่วน, ไม่มี SQL/ชื่อใน HTML, token ผิด = 404", async ({
+test("หน้าอันดับสาธารณะ: ไม่ต้องล็อกอิน, เรียงตามคะแนน/สลับเป็นลำดับส่งได้, รหัสปิดบางส่วน, ไม่มี SQL/ชื่อใน HTML, token ผิด = 404", async ({
   page,
   request,
 }) => {
@@ -13,10 +13,13 @@ test("หน้าอันดับสาธารณะ: ไม่ต้อง
     const admin = adminClient();
     const { data: subs } = await admin.from("submissions").select("id, student_user_id").eq("problem_id", id);
     const subOf = (i: number) => subs!.find((x) => x.student_user_id === students[i].userId)!.id;
+    // คนที่ 2 และ 3 คะแนนเท่ากัน → คนที่ 2 ส่งก่อนได้อันดับดีกว่า
     await admin.from("results").insert([
-      { submission_id: subOf(0), score: 10, verdict: "correct" },
-      { submission_id: subOf(1), score: 5, verdict: "partial" },
-    ]); // คนที่ 3 ยังไม่ให้คะแนน
+      { submission_id: subOf(0), score: 5, verdict: "partial" },
+      { submission_id: subOf(1), score: 10, verdict: "correct" },
+      { submission_id: subOf(2), score: 10, verdict: "correct" },
+    ]);
+    await admin.from("problem_status").update({ is_open: false }).eq("problem_id", id);
     await admin.from("problems").update({ results_released_at: new Date().toISOString(), public_token: token }).eq("id", id);
 
     // หน้าเว็บ (ไม่ได้ล็อกอิน)
@@ -27,12 +30,33 @@ test("หน้าอันดับสาธารณะ: ไม่ต้อง
     const rows = page.getByTestId("ranking-row");
     await expect(rows).toHaveCount(3);
     const mask = (sid: string) => `${sid.slice(0, 2)}xxx${sid.slice(-3)}`;
-    for (const [i, expected] of [["1", "10"], ["2", "5"], ["3", "รอตรวจ"]].entries()) {
-      const cells = rows.nth(i).locator("td");
-      await expect(cells.nth(0)).toHaveText(expected[0]);
-      await expect(cells.nth(1)).toHaveText(mask(students[i].studentId));
-      await expect(cells.nth(3)).toHaveText(expected[1]);
-    }
+    // [อันดับ, ลำดับส่ง, นิสิตคนที่, คะแนน]
+    const expectRows = async (expected: [string, string, number, string][]) => {
+      for (const [i, [rank, order, who, score]] of expected.entries()) {
+        const cells = rows.nth(i).locator("td");
+        await expect(cells.nth(0)).toHaveText(rank);
+        await expect(cells.nth(1)).toHaveText(order);
+        await expect(cells.nth(2)).toHaveText(mask(students[who].studentId));
+        await expect(cells.nth(4)).toHaveText(score);
+      }
+    };
+    // ค่าเริ่มต้น: เรียงตามคะแนน
+    await expect(page.getByTestId("sort-score")).toHaveAttribute("aria-pressed", "true");
+    await expectRows([
+      ["1", "2", 1, "10"],
+      ["2", "3", 2, "10"],
+      ["3", "1", 0, "5"],
+    ]);
+    // สลับเป็นลำดับส่ง แล้วกลับ
+    await page.getByTestId("sort-order").click();
+    await expect(page.getByTestId("sort-order")).toHaveAttribute("aria-pressed", "true");
+    await expectRows([
+      ["3", "1", 0, "5"],
+      ["1", "2", 1, "10"],
+      ["2", "3", 2, "10"],
+    ]);
+    await page.getByTestId("sort-score").click();
+    await expect(rows.nth(0).locator("td").nth(0)).toHaveText("1");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
 

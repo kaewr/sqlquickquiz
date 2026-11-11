@@ -32,7 +32,7 @@ async function studentPage(browser: Browser, s: TestStudent, baseURL: string) {
 }
 const historyStatus = (page: Page, problemId: number) => page.getByTestId(`history-${problemId}`).getByTestId("history-status");
 
-test("ให้คะแนน → ก่อนประกาศนิสิตเห็นรอตรวจ → ประกาศผล (เตือนเมื่อยังไม่ครบ) → นิสิตเห็นผล → แก้หลังประกาศ", async ({
+test("ให้คะแนน → ก่อนประกาศนิสิตเห็นรอตรวจ → ประกาศได้เมื่อปิดรับ+ให้คะแนนครบ → นิสิตเห็นผล → แก้หลังประกาศ → เปิดอีกไม่ได้", async ({
   page,
   browser,
   baseURL,
@@ -73,10 +73,24 @@ test("ให้คะแนน → ก่อนประกาศนิสิต
   await expect(p2.getByTestId(`history-${id}`).getByTestId("history-sql")).toHaveText("SELECT Name FROM city;");
   await expect(p2.getByTestId(`history-${id}`).getByTestId("history-feedback")).toHaveCount(0);
 
-  // ประกาศผล: เตือนเพราะยังไม่ให้คะแนน 1 คน
-  await page.getByRole("button", { name: "ประกาศผล" }).click();
+  // ประกาศผลยังไม่ได้: ข้อยังเปิด + ให้คะแนนไม่ครบ
+  const releaseBtn = page.getByRole("button", { name: "ประกาศผล" });
+  await expect(releaseBtn).toBeDisabled();
+  await expect(page.getByTestId("release-blockers")).toHaveText(
+    "ประกาศผลได้เมื่อ: ต้องปิดรับคำตอบก่อน · ยังไม่ได้ให้คะแนน 1 คน",
+  );
+  await page.getByRole("button", { name: "ปิดรับคำตอบ" }).click();
+  await expect(page.getByTestId("release-blockers")).toHaveText("ประกาศผลได้เมื่อ: ยังไม่ได้ให้คะแนน 1 คน");
+  await expect(releaseBtn).toBeDisabled();
+  const g3 = page.getByTestId(`grade-${s3.studentId}`);
+  await g3.getByRole("button", { name: "ศูนย์" }).click();
+  await expect(g3.getByTestId("grade-verdict")).toHaveText("ผิด 0/10");
+  await expect(page.getByTestId("release-blockers")).toHaveCount(0);
+
+  // ครบเงื่อนไข → ยืนยัน (ยกเลิก/เปิดซ้ำไม่ได้) → ประกาศ
+  await releaseBtn.click();
   const warn = page.getByRole("alertdialog");
-  await expect(warn).toContainText("ยังไม่ได้ให้คะแนน 1 คน");
+  await expect(warn).toContainText("เปิดรับคำตอบข้อนี้อีกไม่ได้");
   await warn.getByRole("button", { name: "ประกาศเลย" }).click();
   const url = page.getByTestId("ranking-url");
   await expect(url).toHaveValue(/\/r\/[A-Za-z0-9_-]{16,}$/);
@@ -91,9 +105,12 @@ test("ให้คะแนน → ก่อนประกาศนิสิต
   await expect(historyStatus(p2, id)).toHaveText("ได้บางส่วน 4/10");
   await expect(p2.getByTestId(`history-${id}`).getByTestId("history-feedback")).toContainText("ขาดคอลัมน์ Population");
 
-  // คนที่ยังไม่ได้ให้คะแนน → ยังรอตรวจ
   const p3 = await studentPage(browser, s3, baseURL!);
-  await expect(historyStatus(p3, id)).toHaveText("รอตรวจ");
+  await expect(historyStatus(p3, id)).toHaveText("ผิด 0/10");
+
+  // ประกาศแล้วเปิดรับคำตอบอีกไม่ได้
+  await expect(page.getByRole("button", { name: "เปิดรับคำตอบ" })).toHaveCount(0);
+  await expect(page.getByTestId("open-locked")).toHaveText("เปิดอีกไม่ได้");
 
   // แก้หลังประกาศ → นิสิตเห็นค่าล่าสุด (โหลดใหม่เมื่อเปิดแท็บ)
   await g2.getByRole("button", { name: "เต็ม" }).click();
@@ -106,12 +123,13 @@ test("ให้คะแนน → ก่อนประกาศนิสิต
   // รายการโจทย์แสดงป้ายประกาศผลแล้ว
   await page.goto("/admin/problems");
   await expect(page.getByTestId(`board-row-${id}`).getByTestId("board-released")).toHaveText("ประกาศผลแล้ว");
+  await expect(page.getByTestId(`board-row-${id}`).getByTestId("open-locked")).toBeVisible();
 
   await p2.context().close();
   await p3.context().close();
 });
 
-test("ปุ่มลัดครึ่ง = คะแนนเต็ม ÷ 2 และศูนย์ = ผิด; ประกาศเมื่อให้ครบไม่ต้องยืนยัน", async ({ page, baseURL, context }) => {
+test("ปุ่มลัดครึ่ง = คะแนนเต็ม ÷ 2 และศูนย์ = ผิด; ปิดรับแล้วให้ครบ → ประกาศได้", async ({ page, baseURL, context }) => {
   const [a, b] = [await newStudent(), await newStudent()];
   const id = await createProblem();
   problems.push(id);
@@ -128,8 +146,10 @@ test("ปุ่มลัดครึ่ง = คะแนนเต็ม ÷ 2 �
   await expect(page.getByTestId(`grade-${b.studentId}`).getByTestId("grade-verdict")).toHaveText("ผิด 0/5");
 
   await expect(page.getByTestId("grading-progress")).toHaveText("ให้คะแนนแล้ว 2 / 2");
+  await expect(page.getByTestId("release-blockers")).toHaveText("ประกาศผลได้เมื่อ: ต้องปิดรับคำตอบก่อน");
+  await page.getByRole("button", { name: "ปิดรับคำตอบ" }).click();
   await page.getByRole("button", { name: "ประกาศผล" }).click();
-  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await page.getByRole("alertdialog").getByRole("button", { name: "ประกาศเลย" }).click();
   await expect(page.getByTestId("released")).toBeVisible();
 });
 
