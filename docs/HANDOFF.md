@@ -14,10 +14,10 @@
 
 - **เสร็จ:** load test (`loadtest/`: accounts, run, login-burst, web) ผลใน `docs/LOADTEST.md` · ทบทวนความปลอดภัย `docs/SECURITY-REVIEW.md` (แก้ M1, L1 บางส่วน, L2, L3; M2 ยอมรับ) · ล็อกอินลองใหม่เอง · keep-alive workflow · `vercel.json` sin1 · เทสต์หน้าค้างเกินอายุ JWT ผ่าน
 - **production ตั้งแล้ว (ตรวจแล้ว):** `NEXT_PUBLIC_COUNT_MODE=polling`, Vercel region sin1, token refresh 6000
-- **ค้างบน production:** บัญชีทดสอบ `99000001`–`99000110` (ตอน LT) — เก็บไว้สำหรับ `loadtest/web.mjs` แล้วลบด้วย `node loadtest/accounts.mjs delete --target prod --yes-production`
-- **รอ “ทำเลย”:** git push → (deploy) → `node loadtest/web.mjs --students 40 --target prod --yes-production` → ลบบัญชีทดสอบ
+- **production 2026-11-11:** push `80b3906` แล้ว (deploy ตรวจแล้ว: header, polling, sin1, ข้อความรอคิว) · web load test 40 คนผ่าน · ลบบัญชีทดสอบแล้ว (นิสิต 110, โจทย์ 2, คำตอบ 1 เท่าเดิม)
 - **รอผู้ใช้:** หลัง deploy เปิด Secure password change · ตั้ง GitHub secret `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` แล้วกด Run workflow ครั้งแรก · กรอกตัวเลข Dashboard ใน LOADTEST.md
-- **ยังไม่ทำ:** คู่มือนิสิต/อาจารย์ (เปิด/ปิดทีละข้อ, ล็อกอินก่อน 2–3 นาที, ดาวน์โหลดสำรองหลังคาบ, ออกจากระบบบนเครื่องส่วนกลาง), ซ้อมเองบน production, ทดลองใช้จริงตอน 1 (`docs/PILOT.md`), reset ข้อมูลก่อนเปิดใช้, tag `phase-7`
+- **คู่มือ:** `docs/manual-student.md`, `docs/manual-instructor.md`, checklist ซ้อม/ทดลอง `docs/PILOT.md`
+- **ยังไม่ทำ:** ผู้ใช้ซ้อมเอง (PILOT ก), ทดลองตอน 1 (PILOT ข), reset ข้อมูล (PILOT ค), tag `phase-7`
 
 ## สถานะ ณ ตอนส่งต่อ (จบระยะ 6)
 
