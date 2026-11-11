@@ -11,7 +11,7 @@
 
 **สภาพแวดล้อม**
 - Supabase project จริง `anyvflatoeedytlrntmp` (Singapore) — `supabase link` แล้ว, migration ล่าสุด `grading` (ไม่ push seed), นิสิตตอน 1 จำนวน 110 คน, อาจารย์ `pornthep.ro@up.ac.th` ผูก Google แล้ว
-- ค่าตั้ง Auth ของ project จริง: ปิดสมัครเอง, Google เปิด, min password 8, rate limit sign-in 1000 / token refresh 6000 (ล็อกอินรหัสผ่านนับในหมวดนี้: ถัง 30 + 20/วินาที), site URL Vercel
+- ค่าตั้ง Auth ของ project จริง: ปิดสมัครเอง, Google เปิด, min password 8, secure password change เปิด, rate limit sign-in 1000 / token refresh 6000 (ล็อกอินรหัสผ่านนับในหมวดนี้: ถัง 30 + 20/วินาที), site URL Vercel
 - GitHub `kaewr/sqlquickquiz` · Vercel https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`) · env บน Vercel ผู้ใช้ตั้งเอง ตรวจจากฝั่งนี้ไม่ได้
 - `.env.local` ชี้ Supabase บนเครื่อง (ค่า project จริงเป็นคอมเมนต์ในไฟล์); `supabase/.env` เก็บ Google client id/secret สำหรับ local
 

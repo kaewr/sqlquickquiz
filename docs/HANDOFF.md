@@ -15,7 +15,7 @@
 - **เสร็จ:** load test (`loadtest/`: accounts, run, login-burst, web) ผลใน `docs/LOADTEST.md` · ทบทวนความปลอดภัย `docs/SECURITY-REVIEW.md` (แก้ M1, L1 บางส่วน, L2, L3; M2 ยอมรับ) · ล็อกอินลองใหม่เอง · keep-alive workflow · `vercel.json` sin1 · เทสต์หน้าค้างเกินอายุ JWT ผ่าน
 - **production ตั้งแล้ว (ตรวจแล้ว):** `NEXT_PUBLIC_COUNT_MODE=polling`, Vercel region sin1, token refresh 6000
 - **production 2026-11-11:** push `80b3906` แล้ว (deploy ตรวจแล้ว: header, polling, sin1, ข้อความรอคิว) · web load test 40 คนผ่าน · ลบบัญชีทดสอบแล้ว (นิสิต 110, โจทย์ 2, คำตอบ 1 เท่าเดิม)
-- **รอผู้ใช้:** หลัง deploy เปิด Secure password change · ตั้ง GitHub secret `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` แล้วกด Run workflow ครั้งแรก · กรอกตัวเลข Dashboard ใน LOADTEST.md
+- **ผู้ใช้ทำแล้ว:** Secure password change เปิด, keep-alive secret + รันครั้งแรกผ่าน · **รอผู้ใช้:** กรอกตัวเลข Dashboard ใน LOADTEST.md
 - **คู่มือ:** `docs/manual-student.md`, `docs/manual-instructor.md`, checklist ซ้อม/ทดลอง `docs/PILOT.md`
 - **ยังไม่ทำ:** ผู้ใช้ซ้อมเอง (PILOT ก), ทดลองตอน 1 (PILOT ข), reset ข้อมูล (PILOT ค), tag `phase-7`
 
