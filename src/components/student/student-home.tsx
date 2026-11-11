@@ -1,6 +1,7 @@
 import type { StudentProfile } from "@/lib/auth";
 import { StudentTabs } from "@/components/student/student-tabs";
 import { UserMenu } from "@/components/student/user-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { CurrentProblems } from "@/components/student/current-problems";
 import { createClient } from "@/lib/supabase/server";
 import { fetchCurrentProblems } from "@/lib/current-problems";
@@ -19,7 +20,10 @@ export async function StudentHome({ profile }: { profile: StudentProfile }) {
               {profile.student_id} · {profile.first_name} {profile.last_name}
             </p>
           </div>
-          <UserMenu />
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <UserMenu />
+          </div>
         </div>
       </header>
 

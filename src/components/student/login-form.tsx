@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { studentLogin, type FormState } from "@/app/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /** รอนานกว่านี้ = น่าจะโดนเพดานล็อกอินและ server กำลังลองใหม่ให้ */
 const QUEUE_HINT_MS = 2000;
@@ -19,7 +20,8 @@ export function LoginForm() {
   }, [pending]);
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12">
+    <main className="relative flex flex-1 items-center justify-center px-4 py-12">
+      <ThemeToggle className="absolute top-4 right-4" />
       <div className="card w-full max-w-sm border-t-4 border-t-accent">
         <h1 className="text-center text-2xl font-bold text-primary">SQL Quick Quiz</h1>
         <p className="mt-1 text-center text-sm text-foreground/60">เข้าสู่ระบบสำหรับนิสิต</p>

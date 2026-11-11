@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logoutToAdmin } from "@/app/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AdminShell({ email, children }: { email: string; children: React.ReactNode }) {
   return (
@@ -24,6 +25,7 @@ export function AdminShell({ email, children }: { email: string; children: React
             <span className="text-sm text-foreground/60" data-testid="admin-email">
               {email}
             </span>
+            <ThemeToggle />
             <form action={logoutToAdmin}>
               <button type="submit" className="btn btn-secondary btn-sm">
                 ออกจากระบบ

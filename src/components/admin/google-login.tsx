@@ -1,8 +1,10 @@
 import { instructorGoogleLogin } from "@/app/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function GoogleLogin({ error }: { error?: string }) {
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12">
+    <main className="relative flex flex-1 items-center justify-center px-4 py-12">
+      <ThemeToggle className="absolute top-4 right-4" />
       <div className="card w-full max-w-sm border-t-4 border-t-accent text-center">
         <h1 className="text-2xl font-bold text-primary">SQL Quick Quiz</h1>
         <p className="mt-1 text-sm text-foreground/60">เข้าสู่ระบบสำหรับอาจารย์</p>

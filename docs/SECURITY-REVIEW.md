@@ -43,7 +43,7 @@
 - `/api/admin/**` เรียก `requireInstructor()` ก่อนทำงาน
 - server action ใช้ session ของผู้เรียก ให้ RLS/RPC เป็นตัวบังคับ
 - callback ของ auth ไม่มี open redirect
-- markdown ไม่มี `rehype-raw` และไม่มี `dangerouslySetInnerHTML`
+- markdown ไม่มี `rehype-raw` · `dangerouslySetInnerHTML` มีที่เดียวคือสคริปต์โหมดสีใน `app/layout.tsx` (ข้อความคงที่ ไม่มีข้อมูลผู้ใช้ — เพิ่มในระยะ 7.1)
 
 **key และ dependency**
 - service key ใช้เฉพาะ `src/lib/supabase/admin.ts` (`server-only`)

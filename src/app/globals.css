@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
+/* โหมดมืดตามปุ่มสลับ (data-theme="dark" บน <html>) ไม่ตามเครื่อง — ค่าเริ่มต้นสว่าง */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* โทนสี: ม่วง #8d38c9 (สีหลัก) + ทอง #996600 (สีเสริม) — คอนทราสต์ผ่าน WCAG AA ทั้งสองโหมด */
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #1c1622;
   --muted: #f6f0fb;
@@ -39,26 +43,25 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #13101a;
-    --foreground: #ededed;
-    --muted: #1f1a28;
-    --border: #342b42;
-    --primary: #b57ae0;
-    --primary-fg: #1a0f24;
-    --accent: #d4a43a;
-    --accent-fg: #1a1206;
-    --accent-bg: #2a2010;
-    --danger: #f87171;
-    --error-bg: #2a1215;
-    --error-fg: #fca5a5;
-    --success-bg: #0f2418;
-    --success-fg: #86efac;
-    --warning-bg: #2a1f0b;
-    --warning-fg: #fcd34d;
-    --warning-border: #5c4510;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #13101a;
+  --foreground: #ededed;
+  --muted: #1f1a28;
+  --border: #342b42;
+  --primary: #b57ae0;
+  --primary-fg: #1a0f24;
+  --accent: #d4a43a;
+  --accent-fg: #1a1206;
+  --accent-bg: #2a2010;
+  --danger: #f87171;
+  --error-bg: #2a1215;
+  --error-fg: #fca5a5;
+  --success-bg: #0f2418;
+  --success-fg: #86efac;
+  --warning-bg: #2a1f0b;
+  --warning-fg: #fcd34d;
+  --warning-border: #5c4510;
 }
 
 body {
