@@ -16,7 +16,7 @@
 - **production ตั้งแล้ว (ตรวจแล้ว):** `NEXT_PUBLIC_COUNT_MODE=polling`, Vercel region sin1, token refresh 6000
 - **production 2026-11-11:** push `80b3906` แล้ว (deploy ตรวจแล้ว: header, polling, sin1, ข้อความรอคิว) · web load test 40 คนผ่าน · ลบบัญชีทดสอบแล้ว (นิสิต 110, โจทย์ 2, คำตอบ 1 เท่าเดิม)
 - **ผู้ใช้ทำแล้ว:** Secure password change เปิด, keep-alive secret + รันครั้งแรกผ่าน · **รอผู้ใช้:** กรอกตัวเลข Dashboard ใน LOADTEST.md
-- **ระยะ 7.2 (ทำบนเครื่องแล้ว รอ push):** migration `ranking_release_rules` — ประกาศผลได้เมื่อปิดรับ + ให้คะแนนครบ, ประกาศแล้วเปิดข้ออีกไม่ได้, หน้าอันดับเรียงตามคะแนน/สลับลำดับส่ง · ขึ้น production ต้อง `db push --remote` แล้ว `git push`
+- **ระยะ 7.2 (ขึ้น production 2026-11-11, `09481bc`):** migration `ranking_release_rules` — ประกาศผลได้เมื่อปิดรับ + ให้คะแนนครบ, ประกาศแล้วเปิดข้ออีกไม่ได้, หน้าอันดับเรียงตามคะแนน/สลับลำดับส่ง · ข้อมูลทดลองบน production: ข้อ 2 ประกาศแล้วแต่ยังเปิดอยู่ (ปิดได้ เปิดซ้ำไม่ได้) — reset ก่อนใช้จริง
 - **คู่มือ:** `docs/manual-student.md`, `docs/manual-instructor.md`, checklist ซ้อม/ทดลอง `docs/PILOT.md`
 - **ยังไม่ทำ:** ผู้ใช้ซ้อมเอง (PILOT ก), ทดลองตอน 1 (PILOT ข), reset ข้อมูล (PILOT ค), tag `phase-7`
 

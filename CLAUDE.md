@@ -5,12 +5,12 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 7 (เหลือทดลองตอน 1 + reset) · 7.1 ปรับสี/หน้าอาจารย์ทำแล้ว · 7.2 อันดับตามคะแนน + เงื่อนไขประกาศผล ทำแล้ว (ยังไม่ขึ้น production) (ดู `docs/PLAN.md` / `docs/HANDOFF.md`)
+- ระยะที่กำลังทำ: 7 (เหลือทดลองตอน 1 + reset) · 7.1 ปรับสี/หน้าอาจารย์ทำแล้ว · 7.2 อันดับตามคะแนน + เงื่อนไขประกาศผล ขึ้น production แล้ว (ดู `docs/PLAN.md` / `docs/HANDOFF.md`)
 - ระยะที่เสร็จแล้ว: 0–6 (tag `phase-0` … `phase-6`, ส่วนเสริมลบโจทย์ `phase-4.1`) ขึ้น project จริงและ Vercel แล้วทั้งหมด
 - ผลเทสต์ล่าสุด: Playwright 71 ข้อ + ข้าม 5 (ผ่าน 2 รอบติด; บางรอบมีข้อ realtime ล้มสลับกัน 1 ข้อ รันแยกผ่าน), pgTAP 226 ข้อ, `session-expiry.spec.ts` (รันเมื่อสั่ง) ผ่าน
 
 **สภาพแวดล้อม**
-- Supabase project จริง `anyvflatoeedytlrntmp` (Singapore) — `supabase link` แล้ว, migration ล่าสุด `grading` (ไม่ push seed), นิสิตตอน 1 จำนวน 110 คน, อาจารย์ `pornthep.ro@up.ac.th` ผูก Google แล้ว
+- Supabase project จริง `anyvflatoeedytlrntmp` (Singapore) — `supabase link` แล้ว, migration ล่าสุด `ranking_release_rules` (ไม่ push seed), นิสิตตอน 1 จำนวน 110 คน, อาจารย์ `pornthep.ro@up.ac.th` ผูก Google แล้ว
 - ค่าตั้ง Auth ของ project จริง: ปิดสมัครเอง, Google เปิด, min password 8, secure password change เปิด, rate limit sign-in 1000 / token refresh 6000 (ล็อกอินรหัสผ่านนับในหมวดนี้: ถัง 30 + 20/วินาที), site URL Vercel
 - GitHub `kaewr/sqlquickquiz` · Vercel https://sqlquickquiz.vercel.app (deploy อัตโนมัติจาก `main`) · env บน Vercel ผู้ใช้ตั้งเอง ตรวจจากฝั่งนี้ไม่ได้
 - `.env.local` ชี้ Supabase บนเครื่อง (ค่า project จริงเป็นคอมเมนต์ในไฟล์); `supabase/.env` เก็บ Google client id/secret สำหรับ local
