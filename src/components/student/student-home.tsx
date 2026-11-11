@@ -11,10 +11,10 @@ export async function StudentHome({ profile }: { profile: StudentProfile }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-border bg-background">
+      <header className="border-b border-t-4 border-border border-t-accent bg-background">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="font-semibold">SQL Quick Quiz</p>
+            <p className="font-semibold text-primary">SQL Quick Quiz</p>
             <p className="truncate text-sm text-foreground/60" data-testid="student-name">
               {profile.student_id} · {profile.first_name} {profile.last_name}
             </p>

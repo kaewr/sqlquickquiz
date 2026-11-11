@@ -92,6 +92,11 @@ test.describe("รายงานรายคนและสำรองข้�
     await expect(page.locator('tr[data-testid^="report-row-"]')).toHaveCount(3);
     await expect(page.getByTestId(`report-col-${p1}`)).toBeVisible();
     await expect(page.getByTestId(`report-col-${pOld}`)).toHaveCount(0); // เมื่อวานไม่อยู่ในช่วง
+    // หัวคอลัมน์ = “ข้อ N” ชี้แล้วเห็นชื่อโจทย์/คะแนนเต็ม; ข้อที่เปิดก่อนได้เลขน้อยกว่า
+    await expect(page.getByTestId(`report-col-${p1}`)).toHaveText(/^ข้อ \d+$/);
+    await expect(page.getByTestId(`report-col-${p1}`)).toHaveAttribute("title", new RegExp(`รายงาน ก ${section}[\\s\\S]*เต็ม 10`));
+    const num = async (p: number) => Number((await page.getByTestId(`report-col-${p}`).textContent())!.replace("ข้อ ", ""));
+    expect(await num(p2)).toBeGreaterThan(await num(p1));
 
     const cell = (i: number, p: number) => page.getByTestId(`cell-${s[i].studentId}-${p}`);
     await expect(cell(0, p1)).toHaveText("10");
@@ -177,12 +182,56 @@ test.describe("รายงานรายคนและสำรองข้�
     expect(strFromU8(files["README.txt"])).toMatch(/submissions\.csv\t\d+ แถว/);
   });
 
+  test("หน้ารายคน: กดรหัสนิสิต → SQL ที่ส่ง, คะแนน/ผล/ความเห็นรายข้อ, ไม่ได้ส่ง, รอตรวจ, สรุปรวม และใช้ช่วงวันที่เดิม", async ({
+    page,
+    baseURL,
+    context,
+  }) => {
+    const admin = adminClient();
+    const { data: p1Subs } = await admin.from("submissions").select("id").eq("problem_id", p1);
+    await admin
+      .from("results")
+      .update({ feedback: "ดีมาก ครบทุกคอลัมน์" })
+      .eq("score", 10)
+      .in("submission_id", p1Subs!.map((x) => x.id));
+    await context.addCookies(await sessionCookies(INSTRUCTOR.email, INSTRUCTOR.password, baseURL!));
+    const today = bangkokDate();
+    await page.goto(`/admin/reports?from=${today}&to=${today}&section=${section}`);
+    await page.getByTestId(`student-link-${s[0].studentId}`).click();
+    await expect(page).toHaveURL(`/admin/reports/students/${s[0].studentId}?from=${today}&to=${today}`);
+    await expect(page.getByTestId("student-heading")).toContainText(s[0].studentId);
+    const item1 = page.getByTestId(`student-item-${p1}`);
+    await expect(item1.getByTestId("item-sql")).toHaveText("SELECT report_secret_a;");
+    await expect(item1.getByTestId("item-score")).toContainText("10");
+    await expect(item1.getByTestId("item-score")).toContainText("ถูก");
+    await expect(item1.getByTestId("item-feedback")).toContainText("ดีมาก ครบทุกคอลัมน์");
+    await expect(page.getByTestId(`student-item-${p2}`).getByTestId("item-score")).toContainText("ได้บางส่วน");
+    await expect(page.getByTestId(`student-item-${pOld}`)).toHaveCount(0); // นอกช่วงวันที่
+    // คะแนนเต็มรวมขึ้นกับโจทย์อื่นที่เปิดวันนี้ (เทสต์อื่นรันขนานกัน) ตรวจเฉพาะคะแนนที่ได้
+    await expect(page.getByTestId("student-total")).toHaveText(/^14 \/ \d+$/);
+
+    // s1: p1 รอตรวจ · s2: วันนี้ไม่ได้ส่ง / ไม่กรองวันเห็นข้อเมื่อวาน
+    await page.goto(`/admin/reports/students/${s[1].studentId}?from=${today}&to=${today}`);
+    await expect(page.getByTestId(`student-item-${p1}`).getByTestId("item-score")).toContainText("รอตรวจ");
+    await page.goto(`/admin/reports/students/${s[2].studentId}?from=${today}&to=${today}`);
+    await expect(page.getByTestId(`student-item-${p1}`).getByTestId("item-score")).toHaveText("ไม่ได้ส่ง");
+    await expect(page.getByTestId(`student-item-${p1}`).getByTestId("item-sql")).toHaveCount(0);
+    await page.goto(`/admin/reports/students/${s[2].studentId}`);
+    await expect(page.getByTestId(`student-item-${pOld}`).getByTestId("item-score")).toContainText("3");
+
+    await page.goto("/admin/reports/students/00000000");
+    await expect(page.getByTestId("student-not-found")).toBeVisible();
+  });
+
   test("นิสิตและผู้ไม่ล็อกอินเรียก API รายงาน/สำรองข้อมูลไม่ได้", async ({ page, baseURL, playwright }) => {
     await page.context().addCookies(await sessionCookies(`${s[0].studentId}@quiz.local`, s[0].password, baseURL!));
     expect((await page.request.get("/api/admin/reports/csv")).status()).toBe(403);
     expect((await page.request.get("/api/admin/backup")).status()).toBe(403);
-    await page.goto("/admin/reports");
-    await expect(page.getByRole("heading", { name: "ไม่มีสิทธิ์เข้าถึง" })).toBeVisible();
+    for (const path of ["/admin/reports", `/admin/reports/students/${s[1].studentId}`]) {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { name: "ไม่มีสิทธิ์เข้าถึง" })).toBeVisible();
+    }
+    await expect(page.getByText("SELECT report_secret_a;")).toHaveCount(0);
 
     const anon = await playwright.request.newContext({ baseURL });
     expect((await anon.get("/api/admin/reports/csv")).status()).toBe(401);

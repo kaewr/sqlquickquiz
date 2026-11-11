@@ -149,7 +149,7 @@ test("คัดลอกโจทย์: ได้โจทย์ใหม่ท
   await expect(page.getByText("ยังไม่เคยเปิด")).toBeVisible();
 });
 
-test("มุมมองรายวัน: แบ่งวันตามเวลากรุงเทพ, ร่างแยกไว้, เปิดหลายข้อพร้อมกัน, ตัวนับอัปเดตเอง", async ({ page, baseURL }) => {
+test("โจทย์ทั้งหมด: มีวันที่และเลขข้อ, กรองช่วงวันที่ (เวลากรุงเทพ), ยังไม่เปิดแยกไว้, เปิดหลายข้อพร้อมกัน, ตัวนับอัปเดตเอง", async ({ page, baseURL }) => {
   const student = await newStudent();
   const today1 = await newProblem({ title: "วันนี้ ก", open: true });
   const draft = await newProblem({ title: "ร่าง ข", open: false });
@@ -162,27 +162,42 @@ test("มุมมองรายวัน: แบ่งวันตามเว
 
   await asInstructor(page, baseURL!);
   await page.goto("/admin/problems");
-  await expect(page.getByTestId("day-label")).toContainText("(วันนี้)");
-  await expect(page.getByTestId(`board-row-${today1}`)).toBeVisible();
-  await expect(page.getByTestId(`board-row-${old}`)).toHaveCount(0);
-  await expect(page.getByRole("region", { name: /ยังไม่เคยเปิด/ }).getByTestId(`board-row-${draft}`)).toBeVisible();
+  await expect(page.getByTestId("range-label")).toHaveText("ทั้งหมด");
+  const opened = page.getByTestId("opened-table");
+  // ค่าเริ่มต้น = ทั้งหมด: ทั้งวันนี้และเมื่อวาน, ใหม่สุดก่อน
+  await expect(opened.getByTestId(`board-row-${today1}`)).toBeVisible();
+  await expect(opened.getByTestId(`board-row-${old}`)).toBeVisible();
+  await expect(page.getByTestId("drafts-table").getByTestId(`board-row-${draft}`)).toBeVisible();
+  // เลขข้อตามเวลาเปิดครั้งแรก: เมื่อวานมาก่อนวันนี้
+  const nOld = Number(await opened.getByTestId(`board-row-${old}`).getByTestId("board-number").textContent());
+  const nToday = Number(await opened.getByTestId(`board-row-${today1}`).getByTestId("board-number").textContent());
+  expect(nOld).toBeGreaterThan(0);
+  expect(nToday).toBeGreaterThan(nOld);
+  await expect(opened.getByTestId(`board-row-${old}`).getByTestId("board-opened")).toContainText("23:30");
+  await expect(page.getByTestId("drafts-table").getByTestId("board-number")).toHaveCount(0);
 
-  // เปิดร่างอีกข้อ → ย้ายมาอยู่วันนี้ และเปิดพร้อมกัน 2 ข้อ
+  // เปิดข้อที่ยังไม่เปิด → ย้ายมาอยู่รายการที่เปิดแล้ว ได้เลขข้อถัดไป และเปิดพร้อมกัน 2 ข้อ
   await connected(page);
   await page.getByTestId(`board-row-${draft}`).getByRole("button", { name: "เปิดรับคำตอบ" }).click();
-  await expect(page.getByRole("region", { name: /เปิดในวันที่เลือก/ }).getByTestId(`board-row-${draft}`)).toBeVisible();
-  await expect(page.getByTestId(`board-row-${draft}`).getByTestId("board-status")).toHaveText("เปิดรับ");
-  await expect(page.getByTestId(`board-row-${today1}`).getByTestId("board-status")).toHaveText("เปิดรับ");
+  await expect(opened.getByTestId(`board-row-${draft}`)).toBeVisible();
+  await expect(opened.getByTestId(`board-row-${draft}`).getByTestId("board-status")).toHaveText("เปิดรับ");
+  await expect(opened.getByTestId(`board-row-${today1}`).getByTestId("board-status")).toHaveText("เปิดรับ");
+  const nDraft = Number(await opened.getByTestId(`board-row-${draft}`).getByTestId("board-number").textContent());
+  expect(nDraft).toBeGreaterThan(nToday);
 
   // ตัวนับอัปเดตเอง
   await connected(page);
   await submitAs(student, today1);
-  await expect(page.getByTestId(`board-row-${today1}`).getByTestId("board-count")).toHaveText("1");
+  await expect(opened.getByTestId(`board-row-${today1}`).getByTestId("board-count")).toHaveText("1");
 
-  // เมื่อวาน
-  await page.goto(`/admin/problems?date=${bangkokDate(-1)}`);
-  await expect(page.getByTestId(`board-row-${old}`)).toBeVisible();
-  await expect(page.getByTestId(`board-row-${today1}`)).toHaveCount(0);
+  // กรองเฉพาะเมื่อวาน: เลขข้อคงเดิม, ข้อที่ยังไม่เปิดยังแสดง
+  await page.goto(`/admin/problems?from=${bangkokDate(-1)}&to=${bangkokDate(-1)}`);
+  await expect(page.getByTestId("range-label")).toContainText("วันที่เปิด");
+  await expect(opened.getByTestId(`board-row-${old}`)).toBeVisible();
+  await expect(opened.getByTestId(`board-row-${old}`).getByTestId("board-number")).toHaveText(String(nOld));
+  await expect(opened.getByTestId(`board-row-${today1}`)).toHaveCount(0);
+  await page.getByRole("link", { name: "ล้างตัวกรอง" }).click();
+  await expect(opened.getByTestId(`board-row-${today1}`)).toBeVisible();
 });
 
 test("หน้ารายละเอียด: กรองตามตอนเรียน ทั้งผู้ส่งและคนที่ยังไม่ส่ง", async ({ page, baseURL }) => {

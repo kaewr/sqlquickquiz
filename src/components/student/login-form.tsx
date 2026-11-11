@@ -20,8 +20,8 @@ export function LoginForm() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <div className="card w-full max-w-sm">
-        <h1 className="text-center text-2xl font-bold">SQL Quick Quiz</h1>
+      <div className="card w-full max-w-sm border-t-4 border-t-accent">
+        <h1 className="text-center text-2xl font-bold text-primary">SQL Quick Quiz</h1>
         <p className="mt-1 text-center text-sm text-foreground/60">เข้าสู่ระบบสำหรับนิสิต</p>
 
         <form action={formAction} className="mt-6 flex flex-col gap-4">

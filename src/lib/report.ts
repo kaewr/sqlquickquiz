@@ -2,10 +2,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isIsoDate } from "@/lib/problem-form";
 import { formatScore } from "@/lib/grading";
+import { problemNumbers } from "@/lib/problem-numbers";
 
 export type ReportFilter = { from: string | null; to: string | null; section: string | null };
 
-export type ReportProblem = { id: number; title: string; day: string; max_score: number };
+/** number = หมายเลขข้อ (ลำดับเวลาเปิดครั้งแรกของโจทย์ทั้งหมด) */
+export type ReportProblem = { id: number; number: number | null; title: string; day: string; max_score: number };
 export type ReportCell = { submitted: boolean; score: number | null };
 export type ReportStudent = {
   student_id: string;
@@ -47,6 +49,7 @@ export function parseReportFilter(params: Record<string, string | string[] | und
  * อ่านจาก v_student_problem_scores ด้วย session ของอาจารย์ (RLS) — ดึงเป็นช่วงจนครบ
  */
 export async function buildReport(supabase: SupabaseClient, filter: ReportFilter): Promise<Report> {
+  const numbersPromise = problemNumbers(supabase);
   const rows: ViewRow[] = [];
   for (let offset = 0; ; offset += PAGE) {
     let q = supabase
@@ -68,7 +71,7 @@ export async function buildReport(supabase: SupabaseClient, filter: ReportFilter
   const students = new Map<string, ReportStudent>();
   for (const r of rows) {
     if (!problems.has(r.problem_id)) {
-      problems.set(r.problem_id, { id: r.problem_id, title: r.title, day: r.day, max_score: Number(r.max_score) });
+      problems.set(r.problem_id, { id: r.problem_id, number: null, title: r.title, day: r.day, max_score: Number(r.max_score) });
     }
     let s = students.get(r.student_id);
     if (!s) {
@@ -90,7 +93,11 @@ export async function buildReport(supabase: SupabaseClient, filter: ReportFilter
     if (score !== null) s.total = Math.round((s.total + score) * 100) / 100;
   }
 
-  const problemList = [...problems.values()].sort((a, b) => a.day.localeCompare(b.day) || a.id - b.id);
+  const numbers = await numbersPromise;
+  for (const p of problems.values()) p.number = numbers.get(p.id) ?? null;
+  const problemList = [...problems.values()].sort(
+    (a, b) => (a.number ?? Infinity) - (b.number ?? Infinity) || a.day.localeCompare(b.day) || a.id - b.id,
+  );
   const maxTotal = Math.round(problemList.reduce((t, p) => t + p.max_score, 0) * 100) / 100;
   const studentList = [...students.values()].sort(
     (a, b) => a.section.localeCompare(b.section, "th") || a.student_id.localeCompare(b.student_id),

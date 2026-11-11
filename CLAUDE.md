@@ -5,9 +5,9 @@
 
 ## สถานะปัจจุบัน
 
-- ระยะที่กำลังทำ: 7 (load test บน project จริงก่อนเปิดใช้ — ตัดสินใจ 2026-11-10, ดู `docs/PLAN.md` / `docs/HANDOFF.md`)
+- ระยะที่กำลังทำ: 7 (เหลือทดลองตอน 1 + reset) · 7.1 ปรับสี/หน้าอาจารย์ทำแล้ว (ดู `docs/PLAN.md` / `docs/HANDOFF.md`)
 - ระยะที่เสร็จแล้ว: 0–6 (tag `phase-0` … `phase-6`, ส่วนเสริมลบโจทย์ `phase-4.1`) ขึ้น project จริงและ Vercel แล้วทั้งหมด
-- ผลเทสต์ล่าสุด: Playwright 68 ข้อ + ข้าม 5 (ผ่าน 2 รอบติด; บางรอบมีข้อ realtime ล้มสลับกัน 1 ข้อ รันแยกผ่าน), pgTAP 212 ข้อ, `session-expiry.spec.ts` (รันเมื่อสั่ง) ผ่าน
+- ผลเทสต์ล่าสุด: Playwright 69 ข้อ + ข้าม 5 (ผ่าน 2 รอบติด; บางรอบมีข้อ realtime ล้มสลับกัน 1 ข้อ รันแยกผ่าน), pgTAP 212 ข้อ, `session-expiry.spec.ts` (รันเมื่อสั่ง) ผ่าน
 
 **สภาพแวดล้อม**
 - Supabase project จริง `anyvflatoeedytlrntmp` (Singapore) — `supabase link` แล้ว, migration ล่าสุด `grading` (ไม่ push seed), นิสิตตอน 1 จำนวน 110 คน, อาจารย์ `pornthep.ro@up.ac.th` ผูก Google แล้ว
@@ -18,7 +18,7 @@
 **แผนที่โค้ด**
 - สิทธิ์: `src/lib/auth.ts` (`getViewer`, `requireInstructor`) · service key เฉพาะ `src/lib/supabase/admin.ts` (`server-only`) ใช้แค่ `/api/admin/students/*` · ข้อความไทย `src/lib/errors.ts`
 - นิสิต: `src/components/student/current-problems.tsx` (realtime/polling/resync), `problem-card.tsx`, `student-history.tsx`; ส่งคำตอบ `src/app/actions/submit.ts`
-- อาจารย์: `/admin/problems` (+ `/new`, `/[id]`, `/[id]/edit`), `/admin/students`, `/admin/reports`; ให้คะแนนบันทึกตรงจากเบราว์เซอร์ `src/lib/grading.ts` (`saveGrade`); ประกาศผล `src/app/actions/grading.ts`
+- อาจารย์: `/admin/problems` (ทั้งหมด + กรองช่วงวันที่; + `/new`, `/[id]`, `/[id]/edit`), `/admin/students`, `/admin/reports` (+ `/students/[studentId]` รายคน); หมายเลขข้อ `src/lib/problem-numbers.ts`; สี ม่วง/ทอง ใน `globals.css` (`--primary`, `--accent`); ให้คะแนนบันทึกตรงจากเบราว์เซอร์ `src/lib/grading.ts` (`saveGrade`); ประกาศผล `src/app/actions/grading.ts`
 - สาธารณะ: `/r/[token]` — `src/proxy.ts` ตรวจ token ก่อน render เพื่อตอบ 404 จริง (rewrite → `/r-missing`)
 - รายงาน/สำรอง: `src/lib/report.ts`, `/api/admin/reports/csv`, `/api/admin/backup` (fflate) — ใช้ session อาจารย์
 - ฐานข้อมูล: รหัสข้อผิดพลาด `NOT_STUDENT`, `INVALID_SQL_TEXT`, `PROBLEM_CLOSED`, `ALREADY_SUBMITTED`, `NOT_INSTRUCTOR` (42501), `PROBLEM_NOT_FOUND`, `SCORE_OUT_OF_RANGE`, `MANUAL_RESULT_PROTECTED`, `MAX_SCORE_BELOW_GIVEN`, `CONFIRM_TITLE_MISMATCH` (P0001); verdict คำนวณใน `tg_results_validate`; `submitted_at` = `clock_timestamp()` หลังได้ล็อก
@@ -164,7 +164,9 @@
 | สถานะในประวัตินิสิต | ก่อนประกาศ = “รอตรวจ”, หลังประกาศ = ถูก / ได้บางส่วน / ผิด + คะแนน |
 | ให้คะแนน | ด้วยมือในรุ่นนี้ (ปุ่มลัด 5 ระดับ เต็ม 100% / ดี 80% / ครึ่ง 50% / ปรับปรุง 25% / ศูนย์ 0% ของคะแนนเต็ม ปัด 2 ตำแหน่ง บันทึกทันทีแบบ optimistic ตรงจากเบราว์เซอร์ผ่าน RLS + กรอกเอง + ความเห็น ≤ 2,000 ตัว กดบันทึก) · ตารางผู้ส่ง: คำตอบละ 2 แถว (SQL แถวล่าง), ชื่อ/ตอนเป็นข้อความเมื่อชี้ที่รหัส, แบ่งหน้า 20 (เลือก 50/100/ทั้งหมดได้) · **verdict คำนวณที่ฐานข้อมูล** จากคะแนน (= เต็ม → correct, 0 → incorrect, นอกนั้น partial) รวมถึงเมื่อแก้คะแนนเต็มของโจทย์ |
 | หลังประกาศผล | แก้คะแนนได้ นิสิตเห็นค่าล่าสุด · คนที่ยังไม่ได้ให้คะแนนเห็น “รอตรวจ” จนกว่าจะให้ · ไม่มีการยกเลิกประกาศ · ลิงก์ `/r/[token]` แสดงตั้งแต่ระยะ 5 แต่หน้าเปิดได้ในระยะ 6 |
-| รายงานรายคน | `/admin/reports` กรองช่วงวันที่ (วันเปิดครั้งแรก, ค่าเริ่มต้น = ทั้งหมด) + ตอน · ว่าง = ไม่ได้ส่ง, “รอตรวจ” = ส่งแล้วยังไม่ให้คะแนน (ไม่นับในรวม) · มีคอลัมน์จำนวนข้อที่ส่ง/คะแนนรวม/คะแนนเต็มรวม · แสดงนิสิตที่ปิดบัญชีพร้อมป้าย · ส่งออก CSV UTF-8 BOM |
+| หน้าโจทย์ (อาจารย์) | โจทย์ทั้งหมดพร้อมวันที่เปิดครั้งแรก + กรองช่วงวันที่; ยังไม่เปิดแยกกลุ่ม · **หมายเลขข้อ** = ลำดับเวลาเปิดครั้งแรกของโจทย์ทั้งหมด (ไม่ขึ้นกับตัวกรอง) |
+| โทนสี | ม่วง `#8d38c9` (หลัก) + ทอง `#996600` (เสริม); โหมดมืด `#b57ae0` / `#d4a43a` |
+| รายงานรายคน | `/admin/reports` กรองช่วงวันที่ (วันเปิดครั้งแรก, ค่าเริ่มต้น = ทั้งหมด) + ตอน (คอลัมน์/ตัวกรองตอนซ่อนเองเมื่อมีตอนเดียว) · หัวคอลัมน์ “ข้อ N” ชี้แล้วเห็นชื่อ · กดรหัสนิสิต → `/admin/reports/students/[id]` SQL/คะแนน/ผล/ความเห็นรายข้อ · ว่าง = ไม่ได้ส่ง, “รอตรวจ” = ส่งแล้วยังไม่ให้คะแนน (ไม่นับในรวม) · มีคอลัมน์จำนวนข้อที่ส่ง/คะแนนรวม/คะแนนเต็มรวม · แสดงนิสิตที่ปิดบัญชีพร้อมป้าย · ส่งออก CSV UTF-8 BOM |
 | สำรองข้อมูล | zip ของ CSV ครบ 8 ตารางใน public + README.txt (เวลา/จำนวนแถว) ผ่าน session อาจารย์ ไม่ใช้ service key ไม่รวม auth |
 | CSV รายชื่อ | `student_id, first_name, last_name, section` UTF-8 (รองรับ BOM จาก Excel) |
 

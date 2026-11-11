@@ -4,10 +4,10 @@ import { logoutToAdmin } from "@/app/actions/auth";
 export function AdminShell({ email, children }: { email: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-border">
+      <header className="border-b border-t-4 border-border border-t-accent">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <nav className="flex items-center gap-4">
-            <Link href="/admin" className="font-semibold">
+            <Link href="/admin" className="font-semibold text-primary">
               SQL Quick Quiz · อาจารย์
             </Link>
             <Link href="/admin/problems" className="text-sm text-foreground/70 hover:text-foreground">

@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
+/* โทนสี: ม่วง #8d38c9 (สีหลัก) + ทอง #996600 (สีเสริม) — คอนทราสต์ผ่าน WCAG AA ทั้งสองโหมด */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --muted: #f1f2f4;
-  --border: #e2e4e8;
-  --primary: #1d4ed8;
+  --foreground: #1c1622;
+  --muted: #f6f0fb;
+  --border: #e6ddef;
+  --primary: #8d38c9;
   --primary-fg: #ffffff;
+  --accent: #996600;
+  --accent-fg: #ffffff;
+  --accent-bg: #fbf5e6;
   --danger: #b91c1c;
   --error-bg: #fef2f2;
   --error-fg: #991b1b;
@@ -24,6 +28,9 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-bg: var(--accent-bg);
   --color-danger: var(--danger);
   --color-warning-bg: var(--warning-bg);
   --color-warning-fg: var(--warning-fg);
@@ -34,12 +41,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1115;
+    --background: #13101a;
     --foreground: #ededed;
-    --muted: #1b1f27;
-    --border: #2b313c;
-    --primary: #3b82f6;
-    --primary-fg: #ffffff;
+    --muted: #1f1a28;
+    --border: #342b42;
+    --primary: #b57ae0;
+    --primary-fg: #1a0f24;
+    --accent: #d4a43a;
+    --accent-fg: #1a1206;
+    --accent-bg: #2a2010;
     --danger: #f87171;
     --error-bg: #2a1215;
     --error-fg: #fca5a5;
